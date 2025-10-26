@@ -1,0 +1,284 @@
+/* Address Page Styles - Matching Profile Settings Theme */
+.address-page {
+  min-height: 100vh;
+  background-color:transparent;
+}
+
+.address-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  margin-top: 8.5rem; /* Account for navbar */
+}
+
+.address-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.address-header h1 {
+  font-size: 2.5rem;
+  color: #BA93B1;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.address-header p {
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.add-address-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background-color: #BA93B1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0 auto 3rem;
+  transition: all 0.3s ease;
+}
+
+.add-address-btn:hover {
+  background-color: #d42299;
+}
+
+/* Address Form */
+.address-form-container {
+  background:transparent;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.address-form-container h2 {
+  font-size: 1.5rem;
+  color: #BA93B1;
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+
+  border-radius: 4rem;
+  font-size: 1rem;
+
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group input {
+  width: auto;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: 1px solid #BA93B1;
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #bc2020;
+}
+
+.save-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #BA93B1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+  background-color: #d42299;
+}
+
+/* Address Grid */
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.address-card {
+  background: transparent;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.address-card.default {
+  border: 2px solid #BA93B1;
+}
+
+.default-badge {
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  background-color: #BA93B1;
+  color: white;
+  padding: 0.25rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.address-content {
+  margin-bottom: 1.5rem;
+}
+
+.address-content h3 {
+  font-size: 1.2rem;
+  color: #BA93B1;
+  margin-bottom: 0.5rem;
+}
+
+.address-content p {
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.address-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.edit-btn {
+  background-color: #f0e6ee;
+  color: #BA93B1;
+}
+
+.edit-btn:hover {
+  background-color: #e0d0de;
+}
+
+.delete-btn {
+  background-color: #ffebee;
+  color: #e74c3c;
+}
+
+.delete-btn:hover {
+  background-color: #f5d5d5;
+}
+
+.default-btn {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.default-btn:hover {
+  background-color: #d0e9d1;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state svg {
+  color: #BA93B1;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #666;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  text-align: center;
+  padding: 3rem;
+  color: #BA93B1;
+  font-size: 1.2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .address-container {
+    margin-top: 5rem;
+  }
+  
+  .address-header h1 {
+    font-size: 2rem;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .address-grid {
+    grid-template-columns: 1fr;
+  }
+}

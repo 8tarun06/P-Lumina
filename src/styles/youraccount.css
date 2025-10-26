@@ -1,0 +1,67 @@
+/* youraccount.css - Main section only */
+
+.your-account-container {
+  background-color: black;
+  min-height: 100vh;
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* 🧊 Account Tiles Section */
+.account-tiles {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background-color: black;
+}
+
+.account-tiles h2 {
+  font-size: 2rem;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* 🔲 Grid Container for Tiles */
+.tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  margin-top: 4rem;
+  margin-left: 8rem;
+}
+
+/* 🔳 Individual Tile Card */
+.tile-card {
+  background-color: #111;
+  border-radius: 16px;
+  padding: 1.2rem;
+  color: white;
+  box-shadow: 0 0 10px rgba(186, 147, 177, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 130px;
+}
+
+.tile-card:hover {
+  background-color: #1a1a1a;
+  box-shadow: 0 0 12px rgba(186, 147, 177, 0.7);
+}
+
+/* 📝 Text Inside Tile */
+.tile-card h4 {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.tile-card p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}

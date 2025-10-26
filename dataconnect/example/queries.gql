@@ -1,0 +1,53 @@
+mutation AddNewProduct($name: String!, $description: String!, $imageUrl: String!, $price: Float!, $category: String, $stockQuantity: Int) @auth(level: USER) {
+  product_insert(data: {
+    name: $name,
+    description: $description,
+    imageUrl: $imageUrl,
+    price: $price,
+    category: $category,
+    stockQuantity: $stockQuantity
+  })
+}
+
+query GetProductsByCategory($category: String!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  products(where: {category: {eq: $category}}) {
+    id
+    name
+    description
+    imageUrl
+    price
+    stockQuantity
+    category
+  }
+}
+
+mutation UpdateProductStock($id: UUID!, $stockQuantity: Int!) @auth(level: USER) {
+  product_update(
+    id: $id,
+    data: {
+      stockQuantity: $stockQuantity
+    }
+  )
+}
+
+query GetUserOrders @auth(level: USER) {
+  orders(where: {userId: {eq_expr: "auth.uid"}}) {
+    id
+    billingAddress
+    shippingAddress
+    orderDate
+    totalAmount
+    status
+    orderItems_on_order {
+      product {
+        id
+        name
+        description
+        price
+        imageUrl
+      }
+      quantity
+      unitPrice
+    }
+  }
+}

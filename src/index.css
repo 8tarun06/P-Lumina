@@ -1,0 +1,222 @@
+/* auth.css */
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  background:#000;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.form-container {
+  background:var(--theme-color);
+    border-radius: 80px;
+    box-shadow:0 -12px -14px #BA93B1;
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem;
+    margin: 1rem;
+    animation: runningshadow 4s linear infinite;
+}
+
+.auth-logo {
+    width: 120px;
+    margin-bottom: 1rem;
+    border-radius: 20rem;
+    margin-left:6rem;
+}
+
+.auth-logo:hover {
+    transform: translateY(-5px);
+
+}
+
+@keyframes runningshadow {
+   0% {
+        box-shadow: 0 0 10px 2px #BA93B1;
+    }
+    25% {
+        box-shadow: -10px 0 20px 2px #e76cca;
+    }
+    50% {
+        box-shadow: 0 -10px 20px 2px #BA93B1;
+    }
+    75% {
+        box-shadow: 10px 0 20px 2px #e76cca;
+    }
+    100% {
+        box-shadow: 0 10px 20px 2px #BA93B1;
+    }
+}
+
+.form-container:hover {
+   transform: translateY(-5px);
+    box-shadow: 0 4px 12px #e76cca 
+}
+
+
+h2 {
+  margin-bottom: 20px;
+  font-size: 28px;
+  color: #ba93b1;
+  text-align: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input {
+  padding: 12px 15px;
+  border: 2px solid #ba93b1;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  border-color: #e76cca;
+  box-shadow: 0 0 5px #e76cca;
+}
+
+button {
+  background-color: #ba93b1;
+  color: #fff;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #e76cca;
+}
+
+p {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: white;
+}
+
+a {
+  color: #e76cca;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px; /* space for eye icon */
+}
+
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ba93b1;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.eye-icon:hover {
+  color: #e76cca;
+}
+
+
+/* Google Sign-In Button Styles */
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #BA93B1;
+  color: rgba(0, 0, 0, 0.54);
+  height: 44px;
+  width: 100%;
+  border: 1px solid #dadce0;
+  border-radius: 8rem;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.google-signin-btn:hover {
+  background:#e76cca;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.google-icon-wrapper {
+  background: transparent;
+  padding: 10px;
+  border-radius: 4px 0 0 4px;
+  display: flex;
+  align-items: center;
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.google-btn-text {
+  padding: 0 24px;
+  flex-grow: 1;
+  text-align: center;
+  color: black;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #5f6368;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #dadce0;
+}
+
+.divider::before {
+  margin-right: 16px;
+}
+
+.divider::after {
+  margin-left: 16px;
+}
+
+
+:root {
+  --bg-color: #ffffff;
+  --card-shadow:#BA93B1;
+}
+
+body {
+  background-color: var(--bg-color);
+}

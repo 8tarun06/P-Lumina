@@ -1,0 +1,38 @@
+.address-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg, #000000);
+  border: 1px solid #ccc;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.05);
+  margin-top: 1rem;
+}
+
+.address-form input,
+.address-form textarea {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #aaa;
+  font-size: 1rem;
+}
+
+.address-form textarea {
+  resize: vertical;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.form-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #BA93B1;
+  color: white;
+  cursor: pointer;
+}

@@ -1,0 +1,129 @@
+/* wishlist.css */
+
+.wishlist-page {
+  padding-left: 240px; /* Adjust for sidebar */
+  padding-top: 130px; /* Adjust for navbar */
+  min-height: 100vh;
+  background-color: black;
+  color: white;
+}
+
+.wishlist-heading {
+  font-size: 28px;
+  font-weight: bold;
+  color: #BA93B1;
+  margin: 20px 40px;
+}
+
+.wishlist-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rem;
+  padding: 20px 40px;
+}
+
+.wishlist-card {
+  background-color: transparent;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px #BA93B1;
+  padding: 20px;
+  width: 250px;
+  transition: 0.3s ease;
+  position: relative;
+}
+
+.wishlist-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px #e76cca;
+}
+
+.wishlist-card img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+.wishlist-info {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.wishlist-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 6px;
+}
+
+.wishlist-price {
+  font-size: 16px;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.wishlist-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.add-to-cart {
+  background-color: #BA93B1;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.add-to-cart:hover {
+  background-color: #e76cca;
+}
+
+.remove-btn {
+  background-color: transparent;
+  border: 1px solid #BA93B1;
+  color: #BA93B1;
+  padding: 8px 12px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.remove-btn:hover {
+  background-color: #e76cca;
+  color: white;
+  border-color: #e76cca;
+}
+
+/* Empty Wishlist */
+.empty-wishlist {
+  text-align: center;
+  margin-top: 6rem;
+  margin-left: 15rem;
+}
+
+.empty-message {
+  font-size: 20px;
+  color: #ccc;
+  margin-top: 20px;
+}
+
+.start-shopping-btn {
+  margin-top: 20px;
+  display: inline-block;
+  padding: 10px 18px;
+  background-color: #BA93B1;
+  color: white;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.start-shopping-btn:hover {
+  background-color: #e76cca;
+}

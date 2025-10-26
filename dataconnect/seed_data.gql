@@ -1,0 +1,38 @@
+mutation PopulateDatabaseWithSeedData @transaction @auth(level: NO_ACCESS) {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe@example.com",
+      passwordHash: "somehash",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "661f9511-f3ac-52e5-b827-557766551111",
+      firstName: "Jane",
+      lastName: "Smith",
+      email: "jane.smith@example.com",
+      passwordHash: "anotherhash",
+      createdAt: "2024-04-26T13:00:00Z"
+    }
+  ])
+  product_insertMany(data: [
+    {
+      id: "772ga622-04bd-63f6-c938-668877662222",
+      name: "Awesome T-Shirt",
+      description: "A really awesome t-shirt",
+      imageUrl: "http://example.com/tshirt.jpg",
+      price: 25.00,
+      createdAt: "2024-04-26T14:00:00Z"
+    },
+    {
+      id: "883hb733-15ce-7407-da49-779988773333",
+      name: "Cool Jeans",
+      description: "Some cool jeans",
+      imageUrl: "http://example.com/jeans.jpg",
+      price: 75.00,
+      createdAt: "2024-04-26T15:00:00Z"
+    }
+  ])
+}

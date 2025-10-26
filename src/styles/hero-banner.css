@@ -1,0 +1,95 @@
+.hero-banner {
+  width: 100%;
+  margin-top: -490px; /* Custom negative margin for your layout */
+  padding: 0;
+  position: relative;
+  z-index: 1; /* Ensures it stays above other elements */
+  margin-left: 8rem;
+}
+
+.hero-banner-container {
+  width: 75rem; /* 1200px equivalent */
+  max-width: 95%; /* Prevents overflow on smaller screens */
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(15, 162, 86, 0.3);
+  height: 32rem; /* 512px - More attractive proportion */
+  position: relative;
+}
+
+.hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit:cover;
+  object-position: center;
+  display: block;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1200px) {
+  .hero-banner {
+    margin-top: -400px; /* Adjusted for smaller screens */
+  }
+}
+
+@media (max-width: 992px) {
+  .hero-banner {
+    margin-top: -300px;
+  }
+  .hero-banner-container {
+    height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-banner {
+    margin-top: 15px; /* Reset to positive margin for mobile */
+    margin-bottom: 30px;
+  }
+  .hero-banner-container {
+    width: calc(100% - 20px);
+    height: 250px;
+    border-radius: 8px;
+  }
+}
+
+/* Swiper Overrides */
+.swiper-slide {
+  position: relative;
+}
+
+.banner-text {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  max-width: 60%;
+}
+
+.banner-text h3 {
+  font-size: 2.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.banner-text p {
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .banner-text {
+    bottom: 20px;
+    left: 20px;
+    max-width: 80%;
+  }
+  .banner-text h3 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+  .banner-text p {
+    font-size: 0.9rem;
+  }
+}
