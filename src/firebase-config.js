@@ -4,6 +4,7 @@ import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { getFirestore } from "firebase/firestore"; // ✅ THIS LINE IS MISSING
 import { GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage"; // ✅ Add this line
+import { getFunctions } from "firebase/functions";
 
 
 
@@ -23,6 +24,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app); // ✅ Add this line
 const storage = getStorage(app); // ✅ Initialize storage
 export const provider = new GoogleAuthProvider();
+export const functions = getFunctions(app); // ✅ Add this
 
 export { storage }; // ✅ Export storage
 

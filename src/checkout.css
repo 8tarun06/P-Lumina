@@ -8,11 +8,12 @@
   max-width: 900px;
   margin: 2rem auto;
   padding: 2rem;
-  background: transparent;
+  background: rgb(28, 27, 27);
   border-radius: 12px;
-  box-shadow: 0 5px 15px #BA93B1;
+  overflow: hidden;
+  box-shadow: 0 15px 15px #BA93B1;
   margin-top: 6rem; /* Account for navbar */
-  margin-left: 15rem;
+  margin-right: 0.1rem;
 }
 
 .checkout-header {

@@ -25,11 +25,17 @@ const calculateCouponDiscount = (coupon, subtotal) => {
 };
 
 const calculateCartSummary = (cart, appliedCoupons) => {
+  // Use displayPrice (variant price) if available, otherwise use base price
   const subtotal = cart.reduce((total, item) => {
-    const price = parseFloat(item.price) || 0;
+    const price = parseFloat(item.displayPrice || item.price) || 0;
     const quantity = parseInt(item.quantity) || 1;
     return total + price * quantity;
   }, 0);
+
+  console.log('🛒 Checkout - Cart Summary Calculation:');
+  console.log('Cart items:', cart);
+  console.log('Subtotal calculation:', subtotal);
+  console.log('Applied coupons:', appliedCoupons);
 
   let totalDiscount = 0;
   let shipping = 50; // Fixed shipping charges of ₹50
@@ -57,7 +63,7 @@ const calculateCartSummary = (cart, appliedCoupons) => {
   const tax = taxableAmount * 0.18; // 18% GST
   const total = Math.max(0, taxableAmount + tax + shipping);
 
-  return {
+  const summary = {
     subtotal: parseFloat(subtotal.toFixed(2)),
     discount: parseFloat(totalDiscount.toFixed(2)),
     shipping: parseFloat(shipping.toFixed(2)),
@@ -68,6 +74,9 @@ const calculateCartSummary = (cart, appliedCoupons) => {
     shippingSavings: parseFloat(shippingSavings.toFixed(2)),
     couponResults
   };
+
+  console.log('📊 Final Checkout Summary:', summary);
+  return summary;
 };
 
 function Checkout() {
@@ -90,6 +99,7 @@ function Checkout() {
   const [cartSummary, setCartSummary] = useState(null);
   const { showModal } = useGlobalModal();
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState(""); // Track selected address
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -115,6 +125,7 @@ function Checkout() {
 
         if (cartSnap.exists()) {
           const items = cartSnap.data().items || [];
+          console.log('🛒 Checkout - Loaded Cart Items:', items);
           setCartItems(items);
         }
 
@@ -139,15 +150,29 @@ function Checkout() {
           }
         }
 
-        // Fetch addresses
-        const addressesRef = collection(db, "users", user.uid, "addresses");
-        const snapshot = await getDocs(addressesRef);
-        const addressesData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        setAddresses(addressesData);
+        // Fetch addresses with better error handling
+        try {
+          const addressesRef = collection(db, "users", user.uid, "addresses");
+          const snapshot = await getDocs(addressesRef);
+          console.log("📫 Addresses snapshot:", snapshot); // Debug log
+          
+          const addressesData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          console.log("🏠 Loaded addresses:", addressesData); // Debug log
+          setAddresses(addressesData);
+          
+          // Don't auto-select first address - let user choose manually
+          // Only set selectedAddressId to empty to show "Please select an address"
+          setSelectedAddressId("");
+          
+        } catch (addressError) {
+          console.error("Error fetching addresses:", addressError);
+          setAddresses([]);
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -167,21 +192,45 @@ function Checkout() {
   };
 
   const handleAddressSelect = (address) => {
+    console.log("📍 Selecting address:", address); // Debug log
+    setSelectedAddressId(address.id); // Set the selected address ID
     setForm({
-      fullName: address.name,
-      phone: address.phone,
-      address: `${address.addressLine1}${address.addressLine2 ? `, ${address.addressLine2}` : ''}`,
-      city: address.city,
-      pincode: address.zipCode,
+      fullName: address.name || address.fullName || "",
+      phone: address.phone || "",
+      address: `${address.addressLine1 || ""}${address.addressLine2 ? `, ${address.addressLine2}` : ''}`,
+      city: address.city || "",
+      pincode: address.zipCode || address.pincode || "",
       paymentMethod: form.paymentMethod
     });
+  };
+
+  const handleSelectChange = (e) => {
+    const selectedId = e.target.value;
+    setSelectedAddressId(selectedId);
+    
+    if (selectedId) {
+      const selectedAddress = addresses.find(addr => addr.id === selectedId);
+      if (selectedAddress) {
+        handleAddressSelect(selectedAddress);
+      }
+    } else {
+      // Clear form when no address is selected
+      setForm({
+        fullName: "",
+        phone: "",
+        address: "",
+        city: "",
+        pincode: "",
+        paymentMethod: form.paymentMethod
+      });
+    }
   };
 
   const handleOrderSubmit = async () => {
     if (!form.fullName || !form.phone || !form.address || !form.city || !form.pincode) {
       showModal({
         title: "Select Address First",
-        message: "Please go to Your Addresses page to add a new address before checkout.",
+        message: "Please select an address from the dropdown to proceed with checkout.",
         type: "info"
       });
       return;
@@ -224,12 +273,12 @@ function Checkout() {
       const cartItems = cartSnap.data().items;
       
       // ✅ Use discounted total from cartSummary instead of calculating from scratch
-      const totalAmount = cartSummary ? cartSummary.total : cartItems.reduce(
-        (sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1),
-        0
-      );
+      const totalAmount = cartSummary ? cartSummary.total : calculateCartSummary(cartItems, appliedCoupons).total;
 
-      // ✅ Add total + items + coupons in order
+      console.log('💰 Final Order Amount:', totalAmount);
+      console.log('📦 Cart Items for Order:', cartItems);
+
+      // ✅ Add total + items + coupons in order - PRESERVE ALL VARIANT DATA
       const orderDetails = {
         fullName: form.fullName,
         phone: form.phone,
@@ -237,11 +286,19 @@ function Checkout() {
         city: form.city,
         pincode: form.pincode,
         paymentMethod: form.paymentMethod,
-        status: form.paymentMethod === "COD" ? "Pending" : "Paid",
+        status: "Order Placed",
+        paymentStatus: form.paymentMethod === "COD" ? "Pending" : "Paid",
         userId: user.uid,
         email: user.email,
         createdAt: new Date(),
-        items: cartItems,
+        items: cartItems.map(item => ({
+          ...item,
+          // Ensure all variant data is preserved
+          displayPrice: item.displayPrice || item.price,
+          selectedVariants: item.selectedVariants || {},
+          variantImages: item.variantImages || [],
+          productData: item.productData || {}
+        })),
         appliedCoupons: appliedCoupons, // Save applied coupons
         subtotal: cartSummary ? cartSummary.subtotal : totalAmount,
         discount: cartSummary ? cartSummary.discount : 0,
@@ -249,6 +306,8 @@ function Checkout() {
         tax: cartSummary ? cartSummary.tax : 0,
         total: totalAmount.toFixed(2) // store as string with 2 decimals
       };
+
+      console.log('📋 Final Order Details:', orderDetails);
 
       if (form.paymentMethod === "COD") {
         showModal({
@@ -265,7 +324,7 @@ function Checkout() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
-   const res = await fetch(
+    const res = await fetch(
   "https://createorder-gfn55kqmfq-uc.a.run.app",
   {
     method: "POST",
@@ -346,7 +405,8 @@ console.log("🔍 Verifying payment:", {
           if (verifyData.success) {
             const paidOrder = { 
               ...orderDetails, 
-              status: "Paid", 
+              status: "Order Placed",
+              paymentStatus: "Paid",
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature
@@ -529,19 +589,31 @@ console.log("🔍 Verifying payment:", {
                 <div className="address-selector">
                   <label>Select Saved Address</label>
                   <select
-                    onChange={(e) => {
-                      const selectedAddress = addresses.find(addr => addr.id === e.target.value);
-                      if (selectedAddress) handleAddressSelect(selectedAddress);
-                    }}
+                    value={selectedAddressId}
+                    onChange={handleSelectChange}
                   >
                     <option value="">Choose an address</option>
                     {addresses.map(address => (
                       <option key={address.id} value={address.id}>
-                        {address.name} - {address.addressLine1}, {address.city}
+                        {address.name || address.fullName} - {address.addressLine1}, {address.city}
                         {address.isDefault && " (Default)"}
                       </option>
                     ))}
                   </select>
+                  
+                  {/* Display selected address preview */}
+                  <div className="selected-address-preview">
+                    <h4>Selected Address:</h4>
+                    {selectedAddressId ? (
+                      <>
+                        <p><strong>{form.fullName}</strong> | {form.phone}</p>
+                        <p>{form.address}, {form.city} - {form.pincode}</p>
+                      </>
+                    ) : (
+                      <p className="no-address-selected">Please select an address</p>
+                    )}
+                  </div>
+                  
                   <button 
                     className="add-new-address-btn"
                     onClick={() => navigate("/addresses")}
@@ -604,10 +676,11 @@ console.log("🔍 Verifying payment:", {
           <button 
             className="confirm-order-btn"
             onClick={handleOrderSubmit}
+            disabled={processingPayment}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Confirm Order - ₹{cartSummary ? cartSummary.total.toFixed(2) : '0.00'}
+            {processingPayment ? "Processing..." : `Confirm Order - ₹${cartSummary ? cartSummary.total.toFixed(2) : '0.00'}`}
           </button>
         </motion.div>
       </motion.div>

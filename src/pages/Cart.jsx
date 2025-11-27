@@ -4,6 +4,7 @@ import { auth, db } from "../firebase-config";
 import { doc, getDoc, updateDoc, arrayRemove, collection, query, where, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useGlobalModal } from "../context/ModalContext";
+import ResponsiveWrapper from "../layouts/ResponsiveWrapper";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import "../cart.css";
@@ -104,7 +105,7 @@ const calculateCouponDiscount = (coupon, subtotal) => {
 
 const calculateCartSummary = (cart, appliedCoupons) => {
   const subtotal = cart.reduce((total, item) => {
-    const price = parseFloat(item.price) || 0;
+    const price = parseFloat(item.displayPrice || item.price) || 0;
     const quantity = parseInt(item.quantity) || 1;
     return total + price * quantity;
   }, 0);
@@ -218,7 +219,7 @@ function Cart() {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, showModal]);
 
   // Save applied coupons to localStorage
   useEffect(() => {
@@ -227,6 +228,14 @@ function Cart() {
       localStorage.setItem(`appliedCoupons_${user.uid}`, JSON.stringify(appliedCoupons));
     }
   }, [appliedCoupons]);
+
+  // Debug effect to track cart items
+  useEffect(() => {
+    console.log('Cart items updated:', cart.length);
+    console.log('Filtered cart:', cart.filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).length);
+  }, [cart, searchTerm]);
 
 const loadAvailableCoupons = async () => {
   try {
@@ -392,7 +401,7 @@ const applyCoupon = async (couponCode) => {
     }
 
     const subtotal = cart.reduce((total, item) => {
-      const price = parseFloat(item.price) || 0;
+      const price = parseFloat(item.displayPrice || item.price) || 0;
       const quantity = parseInt(item.quantity) || 1;
       return total + price * quantity;
     }, 0);
@@ -480,7 +489,7 @@ const applyCoupon = async (couponCode) => {
 
   const getSuggestedCoupons = () => {
     const subtotal = cart.reduce((total, item) => {
-      const price = parseFloat(item.price) || 0;
+      const price = parseFloat(item.displayPrice || item.price) || 0;
       const quantity = parseInt(item.quantity) || 1;
       return total + price * quantity;
     }, 0);
@@ -545,64 +554,88 @@ const applyCoupon = async (couponCode) => {
     };
   };
 
-  const decreaseQuantity = async (itemId) => {
-    const user = auth.currentUser;
-    if (!user) return;
+const decreaseQuantity = async (itemId, selectedVariants) => {
+  const user = auth.currentUser;
+  if (!user) return;
 
-    const cartRef = doc(db, "carts", user.uid);
-    const currentCart = [...cart];
-    const index = currentCart.findIndex((item) => item.id === itemId);
-    if (index === -1) return;
+  const cartRef = doc(db, "carts", user.uid);
+  const currentCart = [...cart];
+  
+  // Find the exact item with matching ID AND variants
+  const index = currentCart.findIndex((item) => 
+    item.id === itemId && 
+    JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {})
+  );
+  
+  if (index === -1) return;
 
-    if (currentCart[index].quantity > 1) {
-      const updatedCart = currentCart.map((item) =>
-        item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item
-      );
-      await updateDoc(cartRef, { items: updatedCart });
-      setCart(updatedCart);
-      setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
-    } else {
-      await updateDoc(cartRef, {
-        items: arrayRemove(currentCart[index]),
-      });
-      const newCart = currentCart.filter((item) => item.id !== itemId);
-      setCart(newCart);
-      setCartCount(newCart.reduce((total, item) => total + (item.quantity || 1), 0));
-    }
-  };
-
-  const increaseQuantity = async (itemId) => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const cartRef = doc(db, "carts", user.uid);
-    const currentCart = [...cart];
-    const index = currentCart.findIndex((item) => item.id === itemId);
-    if (index === -1) return;
-
-    const updatedCart = currentCart.map((item) =>
-      item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+  if (currentCart[index].quantity > 1) {
+    const updatedCart = currentCart.map((item, idx) =>
+      idx === index ? { ...item, quantity: item.quantity - 1 } : item
     );
     await updateDoc(cartRef, { items: updatedCart });
     setCart(updatedCart);
     setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
-  };
-
-  const removeItem = async (itemId) => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const cartRef = doc(db, "carts", user.uid);
-    const itemToRemove = cart.find((item) => item.id === itemId);
-    if (!itemToRemove) return;
-
+  } else {
+    // Remove item completely when quantity reaches 0
     await updateDoc(cartRef, {
-      items: arrayRemove(itemToRemove),
+      items: arrayRemove(currentCart[index]),
     });
-    const newCart = cart.filter((item) => item.id !== itemId);
+    const newCart = currentCart.filter((item, idx) => idx !== index);
     setCart(newCart);
     setCartCount(newCart.reduce((total, item) => total + (item.quantity || 1), 0));
-  };
+  }
+};
+
+const increaseQuantity = async (itemId, selectedVariants) => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const cartRef = doc(db, "carts", user.uid);
+  const currentCart = [...cart];
+  
+  // Find the exact item with matching ID AND variants
+  const index = currentCart.findIndex((item) => 
+    item.id === itemId && 
+    JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {})
+  );
+  
+  if (index === -1) return;
+
+  const updatedCart = currentCart.map((item, idx) =>
+    idx === index ? { ...item, quantity: item.quantity + 1 } : item
+  );
+  await updateDoc(cartRef, { items: updatedCart });
+  setCart(updatedCart);
+  setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
+};
+
+const removeItem = async (itemId, selectedVariants) => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const cartRef = doc(db, "carts", user.uid);
+  
+  // Find the exact item to remove
+  const itemToRemove = cart.find((item) => 
+    item.id === itemId && 
+    JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {})
+  );
+  
+  if (!itemToRemove) return;
+
+  await updateDoc(cartRef, {
+    items: arrayRemove(itemToRemove),
+  });
+  
+  const newCart = cart.filter((item) => 
+    !(item.id === itemId && 
+      JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {}))
+  );
+  
+  setCart(newCart);
+  setCartCount(newCart.reduce((total, item) => total + (item.quantity || 1), 0));
+};
 
   const formatPrice = (price) => `₹ ${parseFloat(price).toFixed(2)}`;
 
@@ -611,7 +644,7 @@ const applyCoupon = async (couponCode) => {
 
   if (loading) return <div className="loading">Loading your cart...</div>;
 
-  return (
+ return (
     <>
       <Navbar cartCount={cartCount} />
 
@@ -626,25 +659,91 @@ const applyCoupon = async (couponCode) => {
                   Your Cart Is Empty
                 </div>
               ) : (
-                filteredCart.map((item) => {
-                  const price = parseFloat(item.price) || 0;
-                  const quantity = parseInt(item.quantity) || 1;
-                  return (
-                    <div className="cart-item" key={`${item.id}-${item.addedAt}`}>
-                      <img src={item.image} className="cart-item-image" alt={item.name} />
-                      <div className="cart-item-details">
-                        <h3 className="cart-item-title">{item.name}</h3>
-                        <p className="cart-item-price">{formatPrice(price)}</p>
+                <>
+                  <p style={{color: 'white', marginBottom: '1rem'}}>Items in cart: {filteredCart.length}</p>
+                  {filteredCart.map((item) => {
+                    // Use displayPrice if available (from variants), otherwise use base price
+                    const price = parseFloat(item.displayPrice || item.price) || 0;
+                    const quantity = parseInt(item.quantity) || 1;
+                    const selectedVariants = item.selectedVariants || {};
+
+                    // Get the correct image - prioritize variant images, then product image
+                    const itemImage = item.variantImages && item.variantImages.length > 0 
+                      ? item.variantImages[0] 
+                      : item.image || (item.images && item.images[0]) || '';
+
+                    // Create a unique key that includes variants
+                    const uniqueKey = `${item.id}-${JSON.stringify(selectedVariants)}`;
+
+                    return (
+                      <div className="cart-item" key={uniqueKey}>
+                        <img 
+                          src={itemImage} 
+                          className="cart-item-image" 
+                          alt={item.name} 
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.target.src = '/placeholder-image.jpg';
+                            e.target.alt = 'Image not available';
+                          }}
+                        />
+                        <div className="cart-item-details">
+                          <h3 className="cart-item-title">{item.name}</h3>
+
+{selectedVariants && (
+  <div className="clean-variants">
+    <span className="variant-label">
+      {Object.entries(selectedVariants)
+        .map(([key, value]) => {
+          const variants = item.productData?.variants;
+
+          // If variant data exists
+          if (variants && variants[key]) {
+            const option = variants[key].find(opt => opt.value === value);
+            return option?.name || value;
+          }
+
+          return value;
+        })
+        .filter(Boolean)
+        .join(" • ")}
+    </span>
+  </div>
+)}
+
+
+
+                   <p className="cart-item-price">{formatPrice(price)}</p>
+
+                        {!item.displayPrice && (
+                          <p className="cart-item-price">{formatPrice(price)}</p>
+                        )}
+
                         <div className="cart-item-quantity">
-                          <button className="quantity-btn minus" onClick={() => decreaseQuantity(item.id)}>-</button>
+                          <button 
+                            className="quantity-btn minus" 
+                            onClick={() => decreaseQuantity(item.id, selectedVariants)}
+                          >-</button>
+
                           <span>{quantity}</span>
-                          <button className="quantity-btn plus" onClick={() => increaseQuantity(item.id)}>+</button>
+
+                          <button 
+                            className="quantity-btn plus" 
+                            onClick={() => increaseQuantity(item.id, selectedVariants)}
+                          >+</button>
                         </div>
-                        <button className="cart-item-remove" onClick={() => removeItem(item.id)}>Remove</button>
+
+                        <button 
+                          className="cart-item-remove" 
+                          onClick={() => removeItem(item.id, selectedVariants)}
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
-                  );
-                })
+                    );
+                  })}
+                </>
               )}
             </div>
 
@@ -656,7 +755,10 @@ const applyCoupon = async (couponCode) => {
                 <div className="coupon-section">
                   <div 
                     className="coupon-header" 
-                    onClick={() => setShowCouponSection(!showCouponSection)}
+                    onClick={() => {
+                      console.log('Toggling coupon section');
+                      setShowCouponSection(!showCouponSection);
+                    }}
                   >
                     <span>Apply Coupons & Offers</span>
                     <span>{showCouponSection ? '−' : '+'}</span>
@@ -739,16 +841,17 @@ const applyCoupon = async (couponCode) => {
                   <span id="subtotal">{formatPrice(cartSummary.subtotal)}</span>
                 </div>
 
-              {/* Applied Discounts */}
-{appliedCoupons.map(coupon => {
-  const discountAmount = calculateCouponDiscount(coupon, cartSummary.subtotal);
-  return (
-    <div key={coupon.code} className="summary-row discount">
-      <span>Coupon: {coupon.code}</span>
-      <span>-{formatPrice(discountAmount)}</span>
-    </div>
-  );
-})}
+                {/* Applied Discounts */}
+                {appliedCoupons.map(coupon => {
+                  const discountAmount = calculateCouponDiscount(coupon, cartSummary.subtotal);
+                  return (
+                    <div key={coupon.code} className="summary-row discount">
+                      <span>Coupon: {coupon.code}</span>
+                      <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  );
+                })}
+                
                 {cartSummary.discount > 0 && (
                   <div className="summary-row discount-total">
                     <span>Total Discount</span>
@@ -824,4 +927,9 @@ const applyCoupon = async (couponCode) => {
   );
 }
 
-export default Cart;
+// Wrap the Cart component with ResponsiveWrapper
+export default function CartPage() {
+  return (
+    <ResponsiveWrapper Page={Cart} />
+  );
+}

@@ -17,6 +17,7 @@ import "../home.css";
 import { useGlobalModal } from "../context/ModalContext";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import AddToCartModal from "../components/AddToCartModal";
 
 function Home() {
   const navigate = useNavigate();
@@ -41,6 +42,13 @@ function Home() {
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // State for image sliders
+  const [activeSlides, setActiveSlides] = useState({});
+
+  // Add to Cart Modal states
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
+
   // Check if mobile on mount and resize
   useEffect(() => {
     const checkMobile = () => {
@@ -54,6 +62,66 @@ function Home() {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
+
+  // Handle slide navigation
+  const handleSlideNavigation = (productId, direction) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const images = product.images && product.images.length > 0 ? product.images : [product.displayImage || product.image];
+    if (images.length <= 1) return;
+
+    setActiveSlides(prev => {
+      const currentSlide = prev[productId] || 0;
+      let newSlide;
+      
+      if (direction === 'next') {
+        newSlide = (currentSlide + 1) % images.length;
+      } else {
+        newSlide = (currentSlide - 1 + images.length) % images.length;
+      }
+      
+      return {
+        ...prev,
+        [productId]: newSlide
+      };
+    });
+  };
+
+  // Handle dot click
+  const handleDotClick = (e, productId) => {
+    const index = parseInt(e.currentTarget.getAttribute('data-index'));
+    setActiveSlides(prev => ({
+      ...prev,
+      [productId]: index
+    }));
+  };
+
+  // Auto-rotate slides for products with multiple images
+  useEffect(() => {
+    const intervals = {};
+    
+    products.forEach(product => {
+      const images = product.images && product.images.length > 0 ? product.images : [product.displayImage || product.image];
+      
+      if (images.length > 1) {
+        intervals[product.id] = setInterval(() => {
+          setActiveSlides(prev => {
+            const currentSlide = prev[product.id] || 0;
+            const newSlide = (currentSlide + 1) % images.length;
+            return {
+              ...prev,
+              [product.id]: newSlide
+            };
+          });
+        }, 4000); // Change slide every 4 seconds
+      }
+    });
+    
+    return () => {
+      Object.values(intervals).forEach(interval => clearInterval(interval));
+    };
+  }, [products]);
 
   // Auto-rotate slides with infinite loop
   useEffect(() => {
@@ -139,6 +207,97 @@ function Home() {
     fetchHeroBanners();
   }, [showModal]);
 
+  // Add banner validation
+  useEffect(() => {
+    const validateBanners = () => {
+      heroBanners.forEach(banner => {
+        if (banner.ctaLink) {
+          try {
+            parseBannerCtaLink(banner.ctaLink);
+          } catch (error) {
+            console.warn('Invalid banner CTA link:', banner.ctaLink, error);
+          }
+        }
+      });
+    };
+    
+    if (heroBanners.length > 0) {
+      validateBanners();
+    }
+  }, [heroBanners]);
+
+  // Add helper function to parse CTA links
+  const parseBannerCtaLink = (ctaLink) => {
+    if (!ctaLink) return { type: 'none', value: '' };
+    
+    // Product link format: product@productId
+    if (ctaLink.startsWith('product@')) {
+      return { type: 'product', value: ctaLink.replace('product@', '') };
+    }
+    
+    // Category link format: category@categoryName
+    if (ctaLink.startsWith('category@')) {
+      return { type: 'category', value: ctaLink.replace('category@', '') };
+    }
+    
+    // Collection links
+    if (['new-arrivals', 'best-sellers', 'sale', 'featured'].includes(ctaLink)) {
+      return { type: 'collection', value: ctaLink };
+    }
+    
+    // Page links
+    if (ctaLink === 'contact') return { type: 'contact', value: 'contact' };
+    if (ctaLink === 'about') return { type: 'about', value: 'about' };
+    
+    // Default: treat as external URL
+    return { type: 'url', value: ctaLink };
+  };
+
+  // Add banner click handler
+  const handleBannerClick = (banner) => {
+    if (!banner.ctaLink) return;
+    
+    try {
+      const link = parseBannerCtaLink(banner.ctaLink);
+      
+      if (link.type === 'product' && link.value) {
+        navigate(`/product/${link.value}`);
+      } else if (link.type === 'category' && link.value) {
+        setSelectedCategory(link.value);
+        // Scroll to products section
+        setTimeout(() => {
+          document.querySelector('.product-grid')?.scrollIntoView({ 
+            behavior: 'smooth' 
+          });
+        }, 100);
+      } else if (link.type === 'collection' && link.value) {
+        // Handle collections - you might want to filter products differently
+        showModal({
+          title: "Collection View",
+          message: `Showing ${link.value} collection`,
+          type: "info"
+        });
+        // Implement collection filtering logic here
+      } else if (link.type === 'url' && link.value) {
+        // External URL
+        window.open(link.value, '_blank');
+      } else if (link.type === 'contact') {
+        navigate('/contact');
+      } else if (link.type === 'about') {
+        navigate('/about');
+      } else {
+        console.warn('Unknown banner CTA link:', banner.ctaLink);
+      }
+    } catch (error) {
+      console.error('Error handling banner click:', error);
+      showModal({
+        title: "Navigation Error",
+        message: "Could not navigate to the destination",
+        type: "error"
+      });
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -167,10 +326,31 @@ function Home() {
         }
 
         const snapshot = await getDocs(q);
-        const productList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const productList = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const data = doc.data();
+            
+            // Handle both old single image and new images array format
+            let displayImage = '';
+            
+            if (data.images && data.images.length > 0) {
+              // New format: use first image from images array
+              displayImage = data.images[0];
+            } else if (data.image) {
+              // Old format: use single image field
+              displayImage = data.image;
+            } else {
+              // Fallback: use a placeholder image
+              displayImage = 'https://via.placeholder.com/300x300?text=No+Image';
+            }
+            
+            return {
+              id: doc.id,
+              ...data,
+              displayImage // Add the resolved image URL
+            };
+          })
+        );
         setProducts(productList);
       } catch (err) {
         console.error("Failed to load products:", err.message);
@@ -209,8 +389,14 @@ function Home() {
     try {
       const cartRef = doc(db, "carts", user.uid);
       const cartSnap = await getDoc(cartRef);
+      
+      // Create product data with proper image handling
       const productWithMeta = {
-        ...product,
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        image: product.displayImage || product.image || (product.images && product.images[0]),
         quantity: 1,
         addedAt: Date.now(),
       };
@@ -251,6 +437,26 @@ function Home() {
     }
   };
 
+  // Update the addToCart function to handle modal opening
+  const handleAddToCartClick = (product) => {
+    // Check if product has variants
+    const hasVariants = product.variants || product.sizes;
+    
+    if (hasVariants) {
+      // Show modal for products with variants
+      setSelectedProduct(product);
+      setIsAddToCartModalOpen(true);
+    } else {
+      // Directly add to cart for products without variants
+      addToCart(product);
+    }
+  };
+
+  // Update the modal add to cart handler
+  const handleModalAddToCart = async (productWithVariants) => {
+    await addToCart(productWithVariants);
+  };
+
   const toggleWishlist = async (product) => {
     const user = auth.currentUser;
     if (!user) {
@@ -274,7 +480,16 @@ function Home() {
       await setDoc(wishlistRef, { items: wishlistItems });
       setWishlistIds((prev) => prev.filter((id) => id !== product.id));
     } else {
-      wishlistItems.push({ ...product, addedAt: Date.now() });
+      // Include proper image data in wishlist item
+      const wishlistItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        image: product.displayImage || product.image || (product.images && product.images[0]),
+        addedAt: Date.now(),
+      };
+      wishlistItems.push(wishlistItem);
       await setDoc(wishlistRef, { items: wishlistItems });
       setWishlistIds((prev) => [...prev, product.id]);
     }
@@ -426,40 +641,81 @@ function Home() {
     setIsMobileSearchActive(false);
   };
 
-// Get quantity of a product
-const getQuantity = (id) => {
-  const item = cart.find((i) => i.id === id);
-  return item ? item.quantity : 0;
-};
+  // Get quantity of a product
+  const getQuantity = (id) => {
+    const item = cart.find((i) => i.id === id);
+    return item ? item.quantity : 0;
+  };
 
-// Optimistic Quantity Update (Instant & Smooth)
-const updateQuantity = (id, newQty) => {
-  const user = auth.currentUser;
-  if (!user) return;
+  // Optimistic Quantity Update (Instant & Smooth)
+  const updateQuantity = (id, newQty) => {
+    const user = auth.currentUser;
+    if (!user) return;
 
-  // 1️⃣ Instantly update local cart (no delay)
-  let updatedCart = [...cart];
-  const itemIndex = updatedCart.findIndex((i) => i.id === id);
+    // 1️⃣ Instantly update local cart (no delay)
+    let updatedCart = [...cart];
+    const itemIndex = updatedCart.findIndex((i) => i.id === id);
 
-  if (newQty <= 0) {
-    updatedCart = updatedCart.filter((item) => item.id !== id);
-  } else if (itemIndex >= 0) {
-    updatedCart[itemIndex] = { ...updatedCart[itemIndex], quantity: newQty };
-  }
-
-  setCart(updatedCart); // instant state update
-
-  // 2️⃣ Sync with Firebase in background (non-blocking)
-  (async () => {
-    try {
-      const cartRef = doc(db, "carts", user.uid);
-      await setDoc(cartRef, { items: updatedCart }, { merge: true });
-    } catch (error) {
-      console.error("Error syncing cart:", error);
+    if (newQty <= 0) {
+      updatedCart = updatedCart.filter((item) => item.id !== id);
+    } else if (itemIndex >= 0) {
+      updatedCart[itemIndex] = { ...updatedCart[itemIndex], quantity: newQty };
     }
-  })();
-};
 
+    setCart(updatedCart); // instant state update
+
+    // 2️⃣ Sync with Firebase in background (non-blocking)
+    (async () => {
+      try {
+        const cartRef = doc(db, "carts", user.uid);
+        await setDoc(cartRef, { items: updatedCart }, { merge: true });
+      } catch (error) {
+        console.error("Error syncing cart:", error);
+      }
+    })();
+  };
+
+  // Star rating helper method
+  const renderStarRating = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<i key={`full-${i}`} className="fas fa-star"></i>);
+    }
+    
+    // Half star
+    if (hasHalfStar) {
+      stars.push(<i key="half" className="fas fa-star-half-alt"></i>);
+    }
+    
+    // Empty stars
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<i key={`empty-${i}`} className="far fa-star"></i>);
+    }
+    
+    return stars;
+  };
+
+  useEffect(() => {
+  const handleScroll = () => {
+    const banner = document.querySelector(".ultra-hero-wrapper");
+    if (!banner) return;
+
+    const scrollY = window.scrollY;
+    if (scrollY < 400) {
+      banner.classList.add("parallax-active");
+    } else {
+      banner.classList.remove("parallax-active");
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll);
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
 
 
   return (
@@ -553,144 +809,112 @@ const updateQuantity = (id, newQty) => {
         {!isMobile && <Sidebar />}
         
         <main className="main-body">
-          {/* Amazon-style Hero Banner Section */}
-          <section 
-            className="amazon-hero-banner"
-            onMouseEnter={handleSliderHover}
-            onMouseLeave={handleSliderLeave}
-          >
-            <div className="amazon-hero-container" ref={sliderRef}>
-              {heroBanners.length > 0 ? (
-                <>
-                  <div 
-                    className="amazon-hero-slides"
-                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                  >
-                    {heroBanners.map((banner, index) => (
-                      <div 
-                        key={banner.id} 
-                        className={`amazon-hero-slide ${currentSlide === index ? 'active' : ''}`}
-                        onClick={() => banner.ctaLink && navigate(banner.ctaLink)}
-                      >
-                        {banner.type === 'video' ? (
-                          <video
-                            ref={el => videoRefs.current[index] = el}
-                            className="amazon-hero-media"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            src={banner.mediaUrl}
-                          />
-                        ) : (
-                          <img
-                            className="amazon-hero-media"
-                            src={banner.mediaUrl}
-                            alt={banner.title || "Promotional banner"}
-                            loading="lazy"
-                          />
-                        )}
-                        
-                        {/* Amazon-style Content Overlay */}
-                        <div className="amazon-hero-content">
-                          {banner.title && (
-                            <h2 className="amazon-hero-title">{banner.title}</h2>
-                          )}
-                          {banner.subtitle && (
-                            <p className="amazon-hero-subtitle">{banner.subtitle}</p>
-                          )}
-                          {banner.ctaText && (
-                            <button 
-                              className="amazon-shop-now-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                banner.ctaLink && navigate(banner.ctaLink);
-                              }}
-                            >
-                              {banner.ctaText}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Amazon-style Navigation Arrows */}
-                  {heroBanners.length > 1 && !isMobile && (
-                    <>
-                      <button 
-                        className="amazon-slider-arrow amazon-prev-arrow"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          prevSlide();
-                        }}
-                        aria-label="Previous slide"
-                      >
-                        <i className="fas fa-chevron-left"></i>
-                      </button>
-                      <button 
-                        className="amazon-slider-arrow amazon-next-arrow"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          nextSlide();
-                        }}
-                        aria-label="Next slide"
-                      >
-                        <i className="fas fa-chevron-right"></i>
-                      </button>
-                    </>
-                  )}
-                  
-                  {/* Amazon-style Slider Indicators */}
-                  <div className="amazon-slider-indicators">
-                    {heroBanners.map((_, index) => (
-                      <button
-                        key={index}
-                        className={`amazon-indicator ${currentSlide === index ? "amazon-active" : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          goToSlide(index);
-                        }}
-                        aria-label={`Go to slide ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Progress Bar */}
-                  {heroBanners.length > 1 && (
-                    <div className="amazon-progress-bar">
-                      <div 
-                        className="amazon-progress-fill"
-                        style={{ 
-                          width: `${((currentSlide + 1) / heroBanners.length) * 100}%`,
-                          transition: 'width 0.3s ease'
-                        }}
-                      />
-                    </div>
-                  )}
-                </>
+{/* === NEW AMAZON ULTRA HD HERO BANNER === */}
+<section 
+  className="ultra-hero-wrapper"
+  onMouseEnter={handleSliderHover}
+  onMouseLeave={handleSliderLeave}
+>
+  <div className="ultra-hero-slider">
+    {heroBanners.length > 0 && (
+      <>
+        <div 
+          className="ultra-hero-track"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        >
+          {heroBanners.map((banner, index) => (
+            <div 
+              key={banner.id}
+              className="ultra-hero-slide"
+              onClick={() => handleBannerClick(banner)}
+            >
+              {banner.type === "video" ? (
+                <video
+                  ref={(el) => (videoRefs.current[index] = el)}
+                  className="ultra-hero-media"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  src={banner.mediaUrl}
+                />
               ) : (
-                // Fallback Amazon-style banner
-                <div className="amazon-hero-slide amazon-default">
-                  <img
-                    className="amazon-hero-media"
-                    src="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"
-                    alt="Welcome to our store"
-                  />
-                  <div className="amazon-hero-content">
-                    <h2 className="amazon-hero-title">Welcome to Our Store</h2>
-                    <p className="amazon-hero-subtitle">Discover amazing products at unbeatable prices</p>
-                    <button 
-                      className="amazon-shop-now-btn"
-                      onClick={() => navigate('/products')}
+             <img
+  className="ultra-hero-media"
+  src={banner.mediaUrl}
+  alt={banner.title || "Banner"}
+  loading="eager"
+/>
+
+
+              )}
+
+              {/* Overlay Content */}
+              {(banner.title || banner.subtitle || banner.ctaText) && (
+                <div className="ultra-hero-content">
+                  {banner.title && (
+                    <h2 className="ultra-hero-title">{banner.title}</h2>
+                  )}
+                  {banner.subtitle && (
+                    <p className="ultra-hero-subtitle">{banner.subtitle}</p>
+                  )}
+                  {banner.ctaText && (
+                    <button
+                      className="ultra-hero-cta"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBannerClick(banner);
+                      }}
                     >
-                      Shop Now
+                      {banner.ctaText}
                     </button>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
-          </section>
+          ))}
+        </div>
+
+        {/* Arrows */}
+        <button 
+          className="ultra-hero-arrow left"
+          onClick={(e) => {
+            e.stopPropagation();
+            prevSlide();
+          }}
+        >
+          <i className="fas fa-chevron-left"></i>
+        </button>
+
+        <button 
+          className="ultra-hero-arrow right"
+          onClick={(e) => {
+            e.stopPropagation();
+            nextSlide();
+          }}
+        >
+          <i className="fas fa-chevron-right"></i>
+        </button>
+
+        {/* Dots */}
+        <div className="ultra-hero-dots">
+          {heroBanners.map((_, index) => (
+            <button
+              key={index}
+              className={`ultra-dot ${currentSlide === index ? "active" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSlide(index);
+              }}
+            ></button>
+          ))}
+        </div>
+      </>
+    )}
+  </div>
+</section>
+
 
           {/* Category Section - Hidden on mobile, shown in mobile menu */}
           {!isMobile && (
@@ -752,73 +976,201 @@ const updateQuantity = (id, newQty) => {
           {/* Product Grid */}
           <section className="product-grid">
             {sortedProducts.length === 0 ? (
-              <p style={{ color: "white" }}>No products found.</p>
+              <div className="no-products-found">
+                <i className="fas fa-search"></i>
+                <p>No products found.</p>
+              </div>
             ) : (
-              sortedProducts.map((product) => (
-                <div
-                  className="product-card"
-                  key={product.id}
-                  onClick={() => navigateToProductDetail(product.id)}
-                >
-                  <img src={product.image} alt={product.name} />
-                  <div className="product-info">
-                    <div className="product-title">{product.name}</div>
-                    <div className="product-price">₹{product.price}</div>
-                   {cart.some((item) => item.id === product.id) ? (
-  <div className="quantity-controls flex items-center gap-2 mt-2">
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        updateQuantity(product.id, getQuantity(product.id) - 1);
-      }}
-      className="bg-gray-300 text-black px-2 py-1 rounded"
-    >
-      -
-    </button>
-    <span className="text-white">{getQuantity(product.id)}</span>
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        updateQuantity(product.id, getQuantity(product.id) + 1);
-      }}
-      className="bg-gray-300 text-black px-2 py-1 rounded"
-    >
-      +
-    </button>
-  </div>
-) : (
-  <button
-    className="add-to-cart"
-    onClick={(e) => {
-      e.stopPropagation();
-      addToCart(product);
-    }}
-  >
-    Add to Cart
-  </button>
-)}
+              sortedProducts.map((product) => {
+                // Calculate real discount percentage
+                const originalPrice = product.originalPrice || product.price * 1.5; // Fallback if no original price
+                const currentPrice = product.price;
+                const realDiscountPercentage = originalPrice > currentPrice 
+                  ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+                  : 0;
 
-                  </div>
+                // Get real reviews data
+                const averageRating = product.averageRating || 0;
+                const reviewCount = product.reviewCount || 0;
+                
+                return (
                   <div
-                    className={`wishlist-icon ${wishlistIds.includes(product.id) ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleWishlist(product);
-                    }}
-                    title={
-                      wishlistIds.includes(product.id)
-                        ? "Remove from Wishlist"
-                        : "Add to Wishlist"
-                    }
+                    className="modern-product-card"
+                    key={product.id}
+                    onClick={() => navigateToProductDetail(product.id)}
                   >
-                    <i className="fas fa-heart"></i>
+                    {/* Product Badge - Show only if there's a real discount */}
+                    {realDiscountPercentage > 0 && (
+                      <div className="product-badge">{realDiscountPercentage}% OFF</div>
+                    )}
+                    
+                    {/* Product Image Container with Slider */}
+                    <div className="product-image-container">
+                      <div className="image-slider">
+                        {/* Get all images - support both old and new formats */}
+                        {(product.images && product.images.length > 0 ? product.images : [product.displayImage || product.image]).map((image, index) => {
+                          const isActive = activeSlides[product.id] === index || (activeSlides[product.id] === undefined && index === 0);
+                          return (
+                            <div
+                              key={index}
+                              className={`slide ${isActive ? 'active' : ''}`}
+                              data-index={index}
+                            >
+                              <img 
+                                src={image} 
+                                alt={`${product.name} - View ${index + 1}`}
+                                className="product-image"
+                                onError={(e) => {
+                                  e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Slider Navigation Dots - Only show if multiple images */}
+                      {(product.images && product.images.length > 1) || (!product.images && product.displayImage && product.image && product.displayImage !== product.image) ? (
+                        <div className="slider-dots">
+                          {((product.images && product.images.length > 0) ? product.images : [product.displayImage || product.image]).map((_, index) => (
+                            <button
+                              key={index}
+                              className="dot"
+                              data-index={index}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDotClick(e, product.id);
+                              }}
+                              aria-label={`View image ${index + 1}`}
+                            ></button>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* Slider Navigation Arrows - Only show if multiple images */}
+                      {((product.images && product.images.length > 1) || (!product.images && product.displayImage && product.image && product.displayImage !== product.image)) && (
+                        <>
+                          <button
+                            className="slider-arrow prev-arrow"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSlideNavigation(product.id, 'prev');
+                            }}
+                            aria-label="Previous image"
+                          >
+                            <i className="fas fa-chevron-left"></i>
+                          </button>
+                          <button
+                            className="slider-arrow next-arrow"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSlideNavigation(product.id, 'next');
+                            }}
+                            aria-label="Next image"
+                          >
+                            <i className="fas fa-chevron-right"></i>
+                          </button>
+                        </>
+                      )}
+                      
+                      {/* Add to Cart Plus Icon in Corner */}
+                      {!cart.some((item) => item.id === product.id) ? (
+                        <button
+                          className="add-to-cart-plus"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCartClick(product);
+                          }}
+                          title="Add to Cart"
+                        >
+                          <i className="fas fa-plus"></i>
+                        </button>
+                      ) : (
+                        <div className="quantity-controls-corner">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(product.id, getQuantity(product.id) - 1);
+                            }}
+                            className="qty-btn-corner minus"
+                          >
+                            -
+                          </button>
+                          <span className="qty-display-corner">{getQuantity(product.id)}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(product.id, getQuantity(product.id) + 1);
+                            }}
+                            className="qty-btn-corner plus"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Wishlist Icon */}
+                      <button
+                        className="wishlist-btn-corner"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWishlist(product);
+                        }}
+                        title={wishlistIds.includes(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                      >
+                        <i className={`fas fa-heart ${wishlistIds.includes(product.id) ? "active" : ""}`}></i>
+                      </button>
+                    </div>
+
+                    {/* Product Info - Fixed Height Container */}
+                    <div className="product-info-modern">
+                      {/* Real Rating Section */}
+                      <div className="product-rating">
+                        <div className="stars">
+                          {renderStarRating(averageRating)}
+                        </div>
+                        <span className="rating-value">{averageRating.toFixed(1)}</span>
+                        <span className="review-count">({reviewCount})</span>
+                      </div>
+
+                      {/* Product Title - Fixed Height */}
+                      <h3 className="product-title-modern" title={product.name}>
+                        {product.name}
+                      </h3>
+
+                      {/* Real Price Section */}
+                      <div className="price-section">
+                        <span className="current-price">₹{currentPrice.toFixed(2)}</span>
+                        {realDiscountPercentage > 0 && (
+                          <>
+                            <span className="original-price">₹{originalPrice.toFixed(2)}</span>
+                            <span className="discount">
+                              ({realDiscountPercentage}% OFF)
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Category Tag */}
+                      <div className="category-tag">
+                        {product.category || "Uncategorized"}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </section>
         </main>
       </div>
+
+      {/* Add to Cart Modal */}
+      <AddToCartModal
+        product={selectedProduct}
+        isOpen={isAddToCartModalOpen}
+        onClose={() => setIsAddToCartModalOpen(false)}
+        onAddToCart={handleModalAddToCart}
+      />
     </>
   );
 }

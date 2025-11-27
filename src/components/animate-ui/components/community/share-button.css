@@ -1,0 +1,184 @@
+.share-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  outline: none;
+  user-select: none;
+}
+
+.share-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.share-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.share-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Sizes */
+.share-button.small {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.share-button.medium {
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+.share-button.large {
+  padding: 16px 32px;
+  font-size: 18px;
+}
+
+/* Content */
+.share-button-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+
+.share-button.animating .share-button-content {
+  transform: scale(0.95);
+}
+
+.share-icon {
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+.share-button:hover .share-icon {
+  transform: translateY(-1px);
+}
+
+.share-button.animating .share-icon {
+  animation: share-bounce 0.6s ease;
+}
+
+@keyframes share-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Particles Animation */
+.share-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.share-button.animating .particle {
+  animation: particle-burst 0.6s ease-out forwards;
+}
+
+@keyframes particle-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: 
+      translate(
+        calc(-50% + (var(--i) - 2.5) * 20px),
+        calc(-50% - (var(--i) * 12px))
+      )
+      scale(1);
+  }
+}
+
+/* Wave Effect */
+.share-wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.share-button.animating .share-wave {
+  animation: wave-expand 0.6s ease-out;
+}
+
+@keyframes wave-expand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.8;
+  }
+  100% {
+    width: 200%;
+    height: 200%;
+    opacity: 0;
+  }
+}
+
+/* Success state */
+.share-button.success {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.share-button.success .share-icon {
+  transform: scale(1.1);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .share-button.medium {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .share-button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .share-button {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+}

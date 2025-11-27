@@ -45,7 +45,7 @@ function Confirm() {
           const cartSnap = await getDoc(cartRef);
           const cartItems = cartSnap.exists() ? cartSnap.data().items || [] : [];
 
-          // ✅ Save order with items and coupon details
+          // ✅ Enhanced order data with proper variant handling
           const orderData = {
             ...orderDetails,
             userId: user.uid,
@@ -71,7 +71,7 @@ function Confirm() {
           // ✅ Clear applied coupons from localStorage
           localStorage.removeItem(`appliedCoupons_${user.uid}`);
 
-          // ✅ Send confirmation email with proper discount details
+          // ✅ Enhanced email with proper variant details
           await addDoc(collection(db, "emails"), {
             to: user.email,
             message: {
@@ -90,15 +90,53 @@ function Confirm() {
                   <div style="margin-bottom: 25px;">
                     <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Summary</h2>
                     
-                    <!-- Items -->
+                    <!-- Items with Variant Details -->
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                       <strong>Items:</strong>
-                      ${(orderData.items || []).map(item => `
-                        <div style="display: flex; justify-content: between; margin: 8px 0;">
-                          <span>${item.name} (Qty: ${item.quantity})</span>
-                          <span>₹${(parseFloat(item.price) * (item.quantity || 1)).toFixed(2)}</span>
-                        </div>
-                      `).join('')}
+                      ${(orderData.items || []).map(item => {
+                        // Calculate item total with variant pricing
+                        const itemPrice = item.displayPrice || item.price || 0;
+                        const itemQuantity = item.quantity || 1;
+                        const itemTotal = parseFloat(itemPrice) * itemQuantity;
+                        
+                        // Get variant details
+                        const variants = item.selectedVariants || {};
+                        const variantDetails = Object.entries(variants)
+                          .map(([key, value]) => {
+                            // Get display name from product data if available
+                            let displayValue = value;
+                            if (item.productData?.variants?.[key]) {
+                              const variantOption = item.productData.variants[key].find(
+                                opt => opt.value === value
+                              );
+                              if (variantOption) {
+                                displayValue = variantOption.name || value;
+                              }
+                            }
+                            return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${displayValue}`;
+                          })
+                          .join(', ');
+
+                        return `
+                          <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin: 10px 0; background: white;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                              <div style="flex: 1;">
+                                <div style="font-weight: bold; color: #333; margin-bottom: 5px;">${item.name}</div>
+                                ${variantDetails ? `
+                                  <div style="color: #666; font-size: 14px; margin-bottom: 5px;">
+                                    ${variantDetails}
+                                  </div>
+                                ` : ''}
+                                <div style="color: #888; font-size: 14px;">Qty: ${itemQuantity}</div>
+                              </div>
+                              <div style="text-align: right;">
+                                <div style="font-weight: bold; color: #BA93B1;">₹${itemTotal.toFixed(2)}</div>
+                                <div style="color: #888; font-size: 12px;">₹${parseFloat(itemPrice).toFixed(2)} each</div>
+                              </div>
+                            </div>
+                          </div>
+                        `;
+                      }).join('')}
                     </div>
 
                     <!-- Price Breakdown -->

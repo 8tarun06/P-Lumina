@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { auth } from "../firebase-config";
 import "../home.css";
@@ -18,6 +18,23 @@ function Navbar({
   closeMobileSearch 
 }) {
   const [searchActive, setSearchActive] = useState(false);
+
+  // Expose search functionality to mobile layout
+  useEffect(() => {
+    window.__SET_SEARCH_TERM__ = setSearchTerm;
+    window.__PERFORM_SEARCH__ = (term) => {
+      setSearchTerm(term);
+      // Trigger your search logic here
+      if (window.performProductSearch) {
+        window.performProductSearch(term);
+      }
+    };
+    
+    return () => {
+      delete window.__SET_SEARCH_TERM__;
+      delete window.__PERFORM_SEARCH__;
+    };
+  }, [setSearchTerm]);
 
   const handleSearchIconClickLocal = () => {
     if (isMobile) {
