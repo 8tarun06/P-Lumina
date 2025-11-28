@@ -35,7 +35,7 @@ function MobileTopBar({ cartCount, onSearchOpen, onMenuToggle }) {
         </button>
 
         <div className="mobile-logo" onClick={handleLogoClick}>
-          <img src="/public/dark mode .png" alt="Logo" style={{ height: 34 }} />
+          <img src="/dark mode .png" alt="Logo" style={{ height: 34 }} />
         </div>
 
         <button
