@@ -9,9 +9,11 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  orderBy,
   arrayUnion,
-  query, where
+  query,
+  where,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import "../home.css";
