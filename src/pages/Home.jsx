@@ -834,27 +834,29 @@ useEffect(() => {
               className="ultra-hero-slide"
               onClick={() => handleBannerClick(banner)}
             >
-              {banner.type === "video" ? (
-                <video
-                  ref={(el) => (videoRefs.current[index] = el)}
-                  className="ultra-hero-media"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  src={banner.mediaUrl}
-                />
-              ) : (
-             <img
-  className="ultra-hero-media"
-  src={banner.mediaUrl}
-  alt={banner.title || "Banner"}
-  loading="eager"
-/>
+       {banner.type === "video" ? (
+  <video
+    ref={(el) => (videoRefs.current[index] = el)}
+    className="ultra-hero-media-video"
+    autoPlay
+    muted
+    loop
+    playsInline
+    preload="metadata"
+    src={banner.mediaUrl}
+  />
+) : (
+  // Use background DIV for images so CSS can control cover / focal point / crisp scaling
+  <div
+    className="ultra-hero-media-bg"
+    role="img"
+    aria-label={banner.title || 'Promotional banner'}
+    style={{
+      backgroundImage: `url("${banner.mediaUrl}")`,
+    }}
+  />
+)}
 
-
-              )}
 
               {/* Overlay Content */}
               {(banner.title || banner.subtitle || banner.ctaText) && (
