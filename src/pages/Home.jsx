@@ -320,23 +320,15 @@ useEffect(() => {
     try {
       let q;
 
-      if (selectedCategory === "all") {
-        q = query(
-          collection(db, "products"),
-          // Load newest first
-          // Create Firestore index: addedAt DESC
-          orderBy("addedAt", "desc"),
-          // Limit number for blazing speed
-          limit(40)
-        );
-      } else {
-        q = query(
-          collection(db, "products"),
-          where("category", "==", selectedCategory),
-          orderBy("addedAt", "desc"),
-          limit(40)
-        );
-      }
+  if (selectedCategory === "all") {
+  q = collection(db, "products");
+} else {
+  q = query(
+    collection(db, "products"),
+    where("category", "==", selectedCategory)
+  );
+}
+
 
       const snapshot = await getDocs(q);
 
