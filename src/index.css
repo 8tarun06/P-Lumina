@@ -221,33 +221,3 @@ body {
   background-color: var(--bg-color);
 }
 
-/* --- AUTH PAGE MOBILE FIX --- */
-@media (max-width: 820px) {
-  .form-container {
-    width: 90% !important;
-    max-width: 380px;
-    margin: 0 auto;
-    padding: 20px !important;
-    transform: scale(1) !important;
-  }
-
-  .form-container input,
-  .form-container button {
-    font-size: 15px !important;
-    padding: 12px !important;
-  }
-
-  .auth-logo {
-    width: 120px !important;
-    margin-bottom: 10px;
-  }
-
-  .google-signin-btn {
-    padding: 12px !important;
-  }
-
-  h2 {
-    font-size: 22px !important;
-  }
-}
-
