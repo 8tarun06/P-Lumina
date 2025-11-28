@@ -14,7 +14,7 @@ import { useGlobalModal } from "../context/ModalContext";
 
 function SignUp() {
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(""); // NEW
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -52,7 +52,7 @@ function SignUp() {
       // Save new user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         name,
-        phone,
+        phone, // NEW
         email,
         addresses: [],
         createdAt: serverTimestamp(),
@@ -107,12 +107,12 @@ function SignUp() {
   };
 
   return (
-    <div className="form-container mobile-auth-container">
+    <div className="form-container">
       <img
-        src="/dark mode .png"
+        src="dark mode .png"
         alt="Store Logo"
         className="auth-logo"
-        onClick={() => navigate("/")}
+        onClick={() => window.location.href = "/"}
       />
       <h2>Create Your Account</h2>
       <form onSubmit={handleSignUp}>
@@ -170,17 +170,16 @@ function SignUp() {
         <span>OR</span>
       </div>
 
-     <button className="google-signin-btn" onClick={handleGoogleSignUp}>
-  <div className="google-icon-wrapper">
-    <img
-      className="google-icon"
-      src="/google-icon.png"
-      alt="Google sign-in"
-    />
-  </div>
-  <p>Continue With Google</p>
-</button>
-
+      <button className="google-signin-btn" onClick={handleGoogleSignUp}>
+        <div className="google-icon-wrapper">
+          <img
+            className="google-icon"
+            src="./public/google-icon.png"
+            alt="Google sign-in"
+          />
+        </div>
+        <p>Continue With Google</p>
+      </button>
 
       <p>
         Already have an account? <a href="/login">Log in here</a>

@@ -125,12 +125,12 @@ function Login() {
   };
 
   return (
-    <div className="form-container mobile-auth-container">
+    <div className="form-container">
       <img
         src="/dark mode .png"
         alt="Store Logo"
         className="auth-logo"
-        onClick={() => navigate("/")}
+        onClick={() => window.location.href = "/login"}
       />
       <h2>Welcome Back</h2>
       <form onSubmit={handleLogin}>
@@ -186,7 +186,7 @@ function Login() {
         <div className="google-icon-wrapper">
           <img
             className="google-icon"
-            src="/google-icon.png"
+            src="./public/google-icon.png"
             alt="Google sign-in"
           />
         </div>
