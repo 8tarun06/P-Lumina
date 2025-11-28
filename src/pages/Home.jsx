@@ -10,10 +10,7 @@ import {
   setDoc,
   updateDoc,
   arrayUnion,
-  query,
-  where,
-  orderBy,
-  limit
+  query, where
 } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import "../home.css";
@@ -315,41 +312,53 @@ function Home() {
     return () => unsubscribe();
   }, [navigate, showModal]);
 
-useEffect(() => {
-  const fetchProducts = async () => {
-    try {
-      let q;
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        let q;
+        if (selectedCategory === "all") {
+          q = collection(db, "products");
+        } else {
+          q = query(
+            collection(db, "products"),
+            where("category", "==", selectedCategory)
+          );
+        }
 
-  if (selectedCategory === "all") {
-  q = collection(db, "products");
-} else {
-  q = query(
-    collection(db, "products"),
-    where("category", "==", selectedCategory)
-  );
-}
+        const snapshot = await getDocs(q);
+        const productList = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const data = doc.data();
+            
+            // Handle both old single image and new images array format
+            let displayImage = '';
+            
+            if (data.images && data.images.length > 0) {
+              // New format: use first image from images array
+              displayImage = data.images[0];
+            } else if (data.image) {
+              // Old format: use single image field
+              displayImage = data.image;
+            } else {
+              // Fallback: use a placeholder image
+              displayImage = 'https://via.placeholder.com/300x300?text=No+Image';
+            }
+            
+            return {
+              id: doc.id,
+              ...data,
+              displayImage // Add the resolved image URL
+            };
+          })
+        );
+        setProducts(productList);
+      } catch (err) {
+        console.error("Failed to load products:", err.message);
+      }
+    };
 
-
-      const snapshot = await getDocs(q);
-
-      const productList = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          displayImage: data.images?.[0] || data.image || "https://via.placeholder.com/300"
-        };
-      });
-
-      setProducts(productList);
-    } catch (err) {
-      console.error("Failed to load products:", err);
-    }
-  };
-
-  fetchProducts();
-}, [selectedCategory]);
-
+    fetchProducts();
+  }, [selectedCategory]);
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -449,57 +458,42 @@ useEffect(() => {
   };
 
   const toggleWishlist = async (product) => {
-  const user = auth.currentUser;
+    const user = auth.currentUser;
+    if (!user) {
+      showModal({
+        title: "Login First To Manage Wishlist",
+        message: `Please Login First`,
+        type: "error",
+      });
+      navigate("/login");
+      return;
+    }
 
-  if (!user) {
-    showModal({
-      title: "Login First To Manage Wishlist",
-      message: "Please login first",
-      type: "error",
-    });
-    navigate("/login");
-    return;
-  }
-
-  const wishlistRef = doc(db, "wishlists", user.uid);
-
-  // ⚡ 1) OPTIMISTIC UI UPDATE (Instant toggle)
-  setWishlistIds((prev) => {
-    return prev.includes(product.id)
-      ? prev.filter((id) => id !== product.id)
-      : [...prev, product.id];
-  });
-
-  try {
-    // Read Firestore
+    const wishlistRef = doc(db, "wishlists", user.uid);
     const wishlistSnap = await getDoc(wishlistRef);
-    let wishlistItems = wishlistSnap.exists()
-      ? wishlistSnap.data().items || []
-      : [];
+    let wishlistItems = wishlistSnap.exists() ? wishlistSnap.data().items || [] : [];
 
-    const alreadyInWish = wishlistItems.some((item) => item.id === product.id);
+    const alreadyInWishlist = wishlistItems.some((item) => item.id === product.id);
 
-    if (alreadyInWish) {
+    if (alreadyInWishlist) {
       wishlistItems = wishlistItems.filter((item) => item.id !== product.id);
       await setDoc(wishlistRef, { items: wishlistItems });
+      setWishlistIds((prev) => prev.filter((id) => id !== product.id));
     } else {
+      // Include proper image data in wishlist item
       const wishlistItem = {
         id: product.id,
         name: product.name,
         price: product.price,
         category: product.category,
-        image: product.displayImage || product.image || product.images?.[0],
+        image: product.displayImage || product.image || (product.images && product.images[0]),
         addedAt: Date.now(),
       };
       wishlistItems.push(wishlistItem);
       await setDoc(wishlistRef, { items: wishlistItems });
+      setWishlistIds((prev) => [...prev, product.id]);
     }
-
-  } catch (err) {
-    console.error("Wishlist error:", err);
-  }
-};
-
+  };
 
   const handleSearchIconClick = () => {
     if (isMobile) {
@@ -834,29 +828,27 @@ useEffect(() => {
               className="ultra-hero-slide"
               onClick={() => handleBannerClick(banner)}
             >
-       {banner.type === "video" ? (
-  <video
-    ref={(el) => (videoRefs.current[index] = el)}
-    className="ultra-hero-media-video"
-    autoPlay
-    muted
-    loop
-    playsInline
-    preload="metadata"
-    src={banner.mediaUrl}
-  />
-) : (
-  // Use background DIV for images so CSS can control cover / focal point / crisp scaling
-  <div
-    className="ultra-hero-media-bg"
-    role="img"
-    aria-label={banner.title || 'Promotional banner'}
-    style={{
-      backgroundImage: `url("${banner.mediaUrl}")`,
-    }}
-  />
-)}
+              {banner.type === "video" ? (
+                <video
+                  ref={(el) => (videoRefs.current[index] = el)}
+                  className="ultra-hero-media"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  src={banner.mediaUrl}
+                />
+              ) : (
+             <img
+  className="ultra-hero-media"
+  src={banner.mediaUrl}
+  alt={banner.title || "Banner"}
+  loading="eager"
+/>
 
+
+              )}
 
               {/* Overlay Content */}
               {(banner.title || banner.subtitle || banner.ctaText) && (
@@ -1026,7 +1018,6 @@ useEffect(() => {
                             >
                               <img 
                                 src={image} 
-                                loading="lazy"
                                 alt={`${product.name} - View ${index + 1}`}
                                 className="product-image"
                                 onError={(e) => {

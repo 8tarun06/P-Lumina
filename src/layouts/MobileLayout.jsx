@@ -16,10 +16,10 @@ function MobileTopBar({ cartCount, onSearchOpen, onMenuToggle }) {
   }, [location.pathname]);
 
   const handleLogoClick = () => {
-    if (location.pathname === "/home") {
+    if (location.pathname === "/") {
       window.location.reload();
     } else {
-      navigate("/");
+      navigate("/home");
     }
   };
 
@@ -35,7 +35,7 @@ function MobileTopBar({ cartCount, onSearchOpen, onMenuToggle }) {
         </button>
 
         <div className="mobile-logo" onClick={handleLogoClick}>
-          <img src="/dark mode .png" alt="Logo" style={{ height: 34 }} />
+          <img src="dark mode .png" alt="Logo" style={{ height: 34 }} />
         </div>
 
         <button
@@ -75,7 +75,7 @@ function MobileBottomNav() {
   return (
     <nav className="mobile-bottom-nav" role="navigation" aria-label="Mobile Navigation">
       <button 
-        onClick={() => navigate("/")} 
+        onClick={() => navigate("/home")} 
         className={`mobile-bottom-btn ${location.pathname === "/" ? "active" : ""}`} 
         aria-label="Home"
       >
