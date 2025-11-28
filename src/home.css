@@ -1183,3 +1183,11 @@ body.dark-mode #cart-count {
 
 /* performance hint: prevent accidental horizontal scroll */
 .layout { overflow-x: hidden !important; }
+
+.ultra-hero-media-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
