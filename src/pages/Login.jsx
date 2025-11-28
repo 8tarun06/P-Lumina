@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { useGlobalModal } from "../context/ModalContext";
-import MobileLayout from "../layouts/MobileLayout";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -125,105 +124,80 @@ function Login() {
     }
   };
 
-  // Login form content
-  const loginContent = (
-    <div className="auth-page-container">
-      <div className="form-container">
-        <img
-          src="/dark mode .png"
-          alt="Store Logo"
-          className="auth-logo"
-          onClick={() => navigate("/")}
+  return (
+    <div className="form-container mobile-auth-container">
+      <img
+        src="/dark mode .png"
+        alt="Store Logo"
+        className="auth-logo"
+        onClick={() => navigate("/")}
+      />
+      <h2>Welcome Back</h2>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
-        <h2>Welcome Back</h2>
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <div style={{ position: "relative" }}>
-            <div className="password-wrapper">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <FontAwesomeIcon
-                icon={showPassword ? faEyeSlash : faEye}
-                className="eye-icon"
-                onClick={() => setShowPassword(!showPassword)}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
-            <label style={{ color: "#fff" }}>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={() => setRememberMe(!rememberMe)}
-                style={{ marginRight: "5px" }}
-              />
-              Remember Me
-            </label>
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              style={{ background: "none", border: "none", color: "#e76cca", cursor: "pointer" }}
-            >
-              Forgot Password?
-            </button>
-          </div>
-
-          <button type="submit">Login</button>
-        </form>
-
-        <div className="divider">
-          <span>OR</span>
-        </div>
-
-        <button className="google-signin-btn" onClick={handleGoogleLogin}>
-          <div className="google-icon-wrapper">
-            <img
-              className="google-icon"
-              src="/google-icon.png"
-              alt="Google sign-in"
+        <div style={{ position: "relative" }}>
+          <div className="password-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <FontAwesomeIcon
+              icon={showPassword ? faEyeSlash : faEye}
+              className="eye-icon"
+              onClick={() => setShowPassword(!showPassword)}
             />
           </div>
-          <p>Continue With Google</p>
-        </button>
+        </div>
 
-        <p>
-          New to Plumina? <a href="/">Create an account</a>
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+          <label style={{ color: "#fff" }}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={() => setRememberMe(!rememberMe)}
+              style={{ marginRight: "5px" }}
+            />
+            Remember Me
+          </label>
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            style={{ background: "none", border: "none", color: "#e76cca", cursor: "pointer" }}
+          >
+            Forgot Password?
+          </button>
+        </div>
+
+        <button type="submit">Login</button>
+      </form>
+
+      <div className="divider">
+        <span>OR</span>
       </div>
+
+      <button className="google-signin-btn" onClick={handleGoogleLogin}>
+        <div className="google-icon-wrapper">
+          <img
+            className="google-icon"
+            src="/google-icon.png"
+            alt="Google sign-in"
+          />
+        </div>
+        <p>Continue With Google</p>
+      </button>
+
+      <p>
+        New to Plumina? <a href="/">Create an account</a>
+      </p>
     </div>
   );
-
-  // Use MobileLayout for mobile devices, otherwise render directly
-  const [isMobile, setIsMobile] = useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
-  }, []);
-
-  if (isMobile) {
-    return <MobileLayout>{loginContent}</MobileLayout>;
-  }
-
-  return loginContent;
 }
 
 export default Login;

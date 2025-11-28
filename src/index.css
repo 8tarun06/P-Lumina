@@ -251,16 +251,7 @@ body {
   }
 }
 
-/* Auth pages mobile styling */
-.auth-page-container {
-  min-height: 100vh;
-  background: #0b0b0b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
+/* Mobile responsive auth forms */
 .form-container {
   background: rgba(255, 255, 255, 0.05);
   padding: 2rem;
@@ -269,6 +260,16 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   max-width: 400px;
   width: 100%;
+  margin: 0 auto;
+}
+
+.mobile-auth-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem;
+  background: #0b0b0b;
 }
 
 .auth-logo {
@@ -294,6 +295,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .form-container input::placeholder {
@@ -390,22 +392,59 @@ body {
 
 /* Mobile specific adjustments */
 @media (max-width: 768px) {
-  .auth-page-container {
-    padding: 10px;
-    align-items: flex-start;
-    padding-top: 20px;
+  .mobile-auth-container {
+    padding: 1rem;
+    min-height: 100vh;
+    justify-content: center;
   }
 
   .form-container {
     padding: 1.5rem;
-    margin-top: 0;
+    margin: 0;
+    max-width: 100%;
   }
 
   .auth-logo {
     height: 40px;
+    margin-bottom: 1rem;
   }
 
   .form-container h2 {
     font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-container input {
+    padding: 14px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .form-container button[type="submit"] {
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .google-signin-btn {
+    padding: 14px;
+    font-size: 16px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 360px) {
+  .mobile-auth-container {
+    padding: 0.5rem;
+  }
+
+  .form-container {
+    padding: 1rem;
+  }
+
+  .auth-logo {
+    height: 35px;
+  }
+
+  .form-container h2 {
+    font-size: 1.2rem;
   }
 }
