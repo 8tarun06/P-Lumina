@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import "./layouts/responsive-overrides.css";
 import LoadingScreen from "./components/LoadingScreen";
 import ResponsiveWrapper from "./layouts/ResponsiveWrapper";
 
