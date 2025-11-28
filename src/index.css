@@ -221,3 +221,60 @@ body {
   background-color: var(--bg-color);
 }
 
+/* --------------------------------------------- */
+/* MOBILE RESPONSIVE STYLING FOR LOGIN + SIGNUP */
+/* --------------------------------------------- */
+
+@media (max-width: 600px) {
+
+  body {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+
+  .form-container {
+    width: 92%;
+    padding: 1.6rem;
+    margin-top: 1.4rem;
+    border-radius: 40px;  /* smaller round on mobile */
+  }
+
+  .auth-logo {
+    width: 85px;
+    margin-left: 0;
+    display: block;
+    margin: 0 auto 1rem auto; /* center logo */
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  input {
+    font-size: 14px;
+    padding: 11px 14px;
+  }
+
+  button {
+    font-size: 15px;
+    padding: 11px 15px;
+  }
+
+  .google-signin-btn {
+    height: 42px;
+    border-radius: 6rem;
+  }
+
+  .google-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  p {
+    font-size: 13px;
+  }
+}
