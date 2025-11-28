@@ -174,7 +174,7 @@ function SignUp() {
         <div className="google-icon-wrapper">
           <img
             className="google-icon"
-            src="/google-icon.png"
+            src="/Google.webp"
             alt="Google sign-in"
           />
         </div>

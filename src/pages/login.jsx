@@ -186,7 +186,7 @@ function Login() {
         <div className="google-icon-wrapper">
           <img
             className="google-icon"
-            src="./public/google-icon.png"
+            src="/Google.webp"
             alt="Google sign-in"
           />
         </div>
