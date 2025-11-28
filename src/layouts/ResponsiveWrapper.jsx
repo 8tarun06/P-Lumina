@@ -1,4 +1,4 @@
-// src/layouts/ResponsiveWrapper.jsx
+/* src/layouts/ResponsiveWrapper.jsx */
 import React, { useEffect, useState } from "react";
 import DesktopLayout from "./DesktopLayout";
 import TabletLayout from "./TabletLayout";
@@ -17,9 +17,10 @@ import "./responsive-overrides.css";
  */
 export default function ResponsiveWrapper({ Page, pageProps = {} }) {
   const getDeviceType = (width) => {
-    if (width <= 480) return "phone";
-    if (width <= 1024) return "tablet";
-    return "desktop";
+    // UPDATED BREAKPOINTS — DO NOT TOUCH ANYTHING ELSE
+    if (width <= 820) return "phone";     // FIX: Real phones now load MobileLayout
+    if (width <= 1024) return "tablet";   // Tablet layout untouched
+    return "desktop";                     // Desktop unchanged
   };
 
   const [device, setDevice] = useState(getDeviceType(window.innerWidth));
@@ -55,4 +56,3 @@ export default function ResponsiveWrapper({ Page, pageProps = {} }) {
     </MobileLayout>
   );
 }
-
