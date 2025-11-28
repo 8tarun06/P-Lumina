@@ -8,8 +8,8 @@ import LoadingScreen from "./components/LoadingScreen";
 import ResponsiveWrapper from "./layouts/ResponsiveWrapper";
 
 // Pages
-import SignUp from "./pages/Signup";
-import Login from "./pages/Login";
+import SignUp from "./pages/signup";
+import Login from "./pages/login";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
