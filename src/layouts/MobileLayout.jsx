@@ -16,7 +16,7 @@ function MobileTopBar({ cartCount, onSearchOpen, onMenuToggle }) {
   }, [location.pathname]);
 
   const handleLogoClick = () => {
-    if (location.pathname === "/") {
+    if (location.pathname === "/home") {
       window.location.reload();
     } else {
       navigate("/");
