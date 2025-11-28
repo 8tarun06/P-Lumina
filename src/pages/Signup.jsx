@@ -182,7 +182,7 @@ function SignUp() {
       </button>
 
       <p>
-        Already have an account? <a href="/login">Log in here</a>
+        Already have an account? <a href="/Login">Log in here</a>
       </p>
     </div>
   );
