@@ -18,6 +18,14 @@ import { useGlobalModal } from "../context/ModalContext";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import AddToCartModal from "../components/AddToCartModal";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+import ProductCard from "../components/ProductCard";
+import WishlistToast from "../components/WishlistToast";  // <-- add this
+
 
 function Home() {
   const navigate = useNavigate();
@@ -36,6 +44,8 @@ function Home() {
   const videoRefs = useRef([]);
   const autoPlayRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [wishlistToast, setWishlistToast] = useState(null);
+
   
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,6 +58,23 @@ function Home() {
   // Add to Cart Modal states
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isAddToCartModalOpen, setIsAddToCartModalOpen] = useState(false);
+
+  // ======= FETCH CART FUNCTION =======
+  const fetchCartFromFirestore = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const cartRef = doc(db, "carts", user.uid);
+      const cartSnap = await getDoc(cartRef);
+      if (cartSnap.exists()) {
+        const items = cartSnap.data().items || [];
+        setCart(items);
+      }
+    } catch (err) {
+      console.error("Error loading cart from Firebase:", err.message);
+    }
+  };
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -453,47 +480,147 @@ function Home() {
   };
 
   // Update the modal add to cart handler
-  const handleModalAddToCart = async (productWithVariants) => {
-    await addToCart(productWithVariants);
-  };
+// In Home.jsx, update the handleModalAddToCart function
+const handleModalAddToCart = async (productWithVariants) => {
+  const user = auth.currentUser;
+  if (!user) {
+    showModal({
+      title: "Login First",
+      message: "Please login in to Continue",
+      type: "error",
+    });
+    navigate("/login");
+    return;
+  }
 
-  const toggleWishlist = async (product) => {
-    const user = auth.currentUser;
-    if (!user) {
-      showModal({
-        title: "Login First To Manage Wishlist",
-        message: `Please Login First`,
-        type: "error",
+  try {
+    const cartRef = doc(db, "carts", user.uid);
+    const cartSnap = await getDoc(cartRef);
+    
+    // Enhanced product data with variants
+    const productWithMeta = {
+      id: productWithVariants.id,
+      name: productWithVariants.name,
+      price: productWithVariants.price,
+      displayPrice: productWithVariants.displayPrice || productWithVariants.price,
+      category: productWithVariants.category,
+      image: productWithVariants.displayImage || productWithVariants.image || (productWithVariants.images && productWithVariants.images[0]),
+      variantImages: productWithVariants.variantImages || [],
+      selectedVariants: productWithVariants.selectedVariants || {},
+      productData: { // Store original product data for variant display
+        variants: productWithVariants.variants || {}
+      },
+      quantity: 1,
+      addedAt: Date.now(),
+    };
+
+    if (cartSnap.exists()) {
+      const existingItems = cartSnap.data().items || [];
+      
+      // Check if same product with same variants already exists
+      const alreadyExists = existingItems.find((item) => 
+        item.id === productWithMeta.id && 
+        JSON.stringify(item.selectedVariants || {}) === JSON.stringify(productWithMeta.selectedVariants || {})
+      );
+      
+      if (alreadyExists) {
+        showModal({
+          title: "Item Already in Cart",
+          message: "This product with selected variants is already in your cart",
+          type: "info",
+        });
+        return;
+      }
+      
+      await updateDoc(cartRef, {
+        items: arrayUnion(productWithMeta),
       });
-      navigate("/login");
-      return;
-    }
-
-    const wishlistRef = doc(db, "wishlists", user.uid);
-    const wishlistSnap = await getDoc(wishlistRef);
-    let wishlistItems = wishlistSnap.exists() ? wishlistSnap.data().items || [] : [];
-
-    const alreadyInWishlist = wishlistItems.some((item) => item.id === product.id);
-
-    if (alreadyInWishlist) {
-      wishlistItems = wishlistItems.filter((item) => item.id !== product.id);
-      await setDoc(wishlistRef, { items: wishlistItems });
-      setWishlistIds((prev) => prev.filter((id) => id !== product.id));
     } else {
-      // Include proper image data in wishlist item
-      const wishlistItem = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        category: product.category,
-        image: product.displayImage || product.image || (product.images && product.images[0]),
-        addedAt: Date.now(),
-      };
-      wishlistItems.push(wishlistItem);
-      await setDoc(wishlistRef, { items: wishlistItems });
-      setWishlistIds((prev) => [...prev, product.id]);
+      await setDoc(cartRef, {
+        items: [productWithMeta],
+      });
     }
-  };
+
+    showModal({
+      title: "Added to Cart",
+      message: `${productWithVariants.name} has been added to your cart.`,
+      type: "success",
+    });
+
+    setCart((prev) => [...prev, productWithMeta]);
+    fetchCartFromFirestore(); // Refresh cart
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    showModal({
+      title: "Failed to Add to Cart",
+      message: `${productWithVariants.name} failed to add to your cart.`,
+      type: "error",
+    });
+  }
+};
+
+const toggleWishlist = async (product) => {
+  const user = auth.currentUser;
+  if (!user) {
+    showModal({
+      title: "Login First To Manage Wishlist",
+      message: "Please Login First",
+      type: "error",
+    });
+    navigate("/login");
+    return;
+  }
+
+  const wishlistRef = doc(db, "wishlists", user.uid);
+
+  // --- INSTANT UI UPDATE (NO DELAY) ---
+  setWishlistIds((prev) => {
+    if (prev.includes(product.id)) {
+      return prev.filter((id) => id !== product.id);
+    } else {
+      return [...prev, product.id];
+    }
+  });
+
+  // --- SHOW TOAST INSTANTLY ---
+  setWishlistToast({
+    text: wishlistIds.includes(product.id)
+      ? "Removed from Wishlist"
+      : "Saved to Wishlist",
+  });
+
+  // --- FIREBASE SYNC (ASYNC, NON-BLOCKING) ---
+  (async () => {
+    try {
+      const wishlistSnap = await getDoc(wishlistRef);
+      let items = wishlistSnap.exists() ? wishlistSnap.data().items || [] : [];
+
+      const alreadyExists = items.some((i) => i.id === product.id);
+
+      if (alreadyExists) {
+        items = items.filter((i) => i.id !== product.id);
+      } else {
+        items.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          category: product.category,
+          image:
+            product.displayImage ||
+            product.image ||
+            (product.images && product.images[0]),
+          addedAt: Date.now(),
+        });
+      }
+
+      await setDoc(wishlistRef, { items });
+    } catch (err) {
+      console.error("Wishlist sync error:", err);
+    }
+  })();
+};
+
+
 
   const handleSearchIconClick = () => {
     if (isMobile) {
@@ -568,22 +695,8 @@ function Home() {
 
   const sortedProducts = sortProducts(filteredProducts, sortOption);
 
+  // Load cart on component mount
   useEffect(() => {
-    const fetchCartFromFirestore = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      try {
-        const cartRef = doc(db, "carts", user.uid);
-        const cartSnap = await getDoc(cartRef);
-        if (cartSnap.exists()) {
-          const items = cartSnap.data().items || [];
-          setCart(items);
-        }
-      } catch (err) {
-        console.error("Error loading cart from Firebase:", err.message);
-      }
-    };
     fetchCartFromFirestore();
   }, []);
 
@@ -717,6 +830,13 @@ function Home() {
   return () => window.removeEventListener("scroll", handleScroll);
 }, []);
 
+{wishlistToast && (
+  <WishlistToast 
+    text={wishlistToast.text}
+    onClose={() => setWishlistToast(null)}
+  />
+)}
+
 
   return (
     <>
@@ -809,112 +929,69 @@ function Home() {
         {!isMobile && <Sidebar />}
         
         <main className="main-body">
-{/* === NEW AMAZON ULTRA HD HERO BANNER === */}
-<section 
-  className="ultra-hero-wrapper"
-  onMouseEnter={handleSliderHover}
-  onMouseLeave={handleSliderLeave}
->
-  <div className="ultra-hero-slider">
-    {heroBanners.length > 0 && (
-      <>
-        <div 
-          className="ultra-hero-track"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-        >
-          {heroBanners.map((banner, index) => (
-            <div 
-              key={banner.id}
-              className="ultra-hero-slide"
-              onClick={() => handleBannerClick(banner)}
+          {/* === ULTRA SWIPER AMAZON HERO BANNER === */}
+          <section className="ultra-hero-wrapper">
+            <Swiper
+              modules={[Autoplay, Pagination, Navigation]}
+              slidesPerView={1}
+              loop={true}
+              autoplay={{ delay: 3500 }}
+              pagination={{ clickable: true }}
+              navigation={true}
+              className="ultra-hero-swiper"
             >
-              {banner.type === "video" ? (
-                <video
-                  ref={(el) => (videoRefs.current[index] = el)}
-                  className="ultra-hero-media"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  src={banner.mediaUrl}
-                />
-              ) : (
-             <img
-  className="ultra-hero-media"
-  src={banner.mediaUrl}
-  alt={banner.title || "Banner"}
-  loading="eager"
-/>
+              {heroBanners.map((banner, index) => (
+                <SwiperSlide key={banner.id}>
+                  <div
+                    className="ultra-hero-slide"
+                    onClick={() => handleBannerClick(banner)}
+                  >
+                    {banner.type === "video" ? (
+                      <video
+                        className="ultra-hero-media"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        src={banner.mediaUrl}
+                      />
+                    ) : (
+                      <img
+                        className="ultra-hero-media"
+                        src={banner.mediaUrl}
+                        alt={banner.title || "Banner"}
+                        loading="eager"
+                      />
+                    )}
 
-
-              )}
-
-              {/* Overlay Content */}
-              {(banner.title || banner.subtitle || banner.ctaText) && (
-                <div className="ultra-hero-content">
-                  {banner.title && (
-                    <h2 className="ultra-hero-title">{banner.title}</h2>
-                  )}
-                  {banner.subtitle && (
-                    <p className="ultra-hero-subtitle">{banner.subtitle}</p>
-                  )}
-                  {banner.ctaText && (
-                    <button
-                      className="ultra-hero-cta"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBannerClick(banner);
-                      }}
-                    >
-                      {banner.ctaText}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Arrows */}
-        <button 
-          className="ultra-hero-arrow left"
-          onClick={(e) => {
-            e.stopPropagation();
-            prevSlide();
-          }}
-        >
-          <i className="fas fa-chevron-left"></i>
-        </button>
-
-        <button 
-          className="ultra-hero-arrow right"
-          onClick={(e) => {
-            e.stopPropagation();
-            nextSlide();
-          }}
-        >
-          <i className="fas fa-chevron-right"></i>
-        </button>
-
-        {/* Dots */}
-        <div className="ultra-hero-dots">
-          {heroBanners.map((_, index) => (
-            <button
-              key={index}
-              className={`ultra-dot ${currentSlide === index ? "active" : ""}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                goToSlide(index);
-              }}
-            ></button>
-          ))}
-        </div>
-      </>
-    )}
-  </div>
-</section>
-
+                    {/* Text Overlay */}
+                    {(banner.title || banner.subtitle || banner.ctaText) && (
+                      <div className="ultra-hero-content">
+                        {banner.title && (
+                          <h2 className="ultra-hero-title">{banner.title}</h2>
+                        )}
+                        {banner.subtitle && (
+                          <p className="ultra-hero-subtitle">{banner.subtitle}</p>
+                        )}
+                        {banner.ctaText && (
+                          <button
+                            className="ultra-hero-cta"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBannerClick(banner);
+                            }}
+                          >
+                            {banner.ctaText}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </section>
 
           {/* Category Section - Hidden on mobile, shown in mobile menu */}
           {!isMobile && (
@@ -974,191 +1051,24 @@ function Home() {
           )}
 
           {/* Product Grid */}
-          <section className="product-grid">
+          <section className="product-grid-section">
             {sortedProducts.length === 0 ? (
               <div className="no-products-found">
                 <i className="fas fa-search"></i>
                 <p>No products found.</p>
               </div>
             ) : (
-              sortedProducts.map((product) => {
-                // Calculate real discount percentage
-                const originalPrice = product.originalPrice || product.price * 1.5; // Fallback if no original price
-                const currentPrice = product.price;
-                const realDiscountPercentage = originalPrice > currentPrice 
-                  ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-                  : 0;
-
-                // Get real reviews data
-                const averageRating = product.averageRating || 0;
-                const reviewCount = product.reviewCount || 0;
-                
-                return (
-                  <div
-                    className="modern-product-card"
-                    key={product.id}
-                    onClick={() => navigateToProductDetail(product.id)}
-                  >
-                    {/* Product Badge - Show only if there's a real discount */}
-                    {realDiscountPercentage > 0 && (
-                      <div className="product-badge">{realDiscountPercentage}% OFF</div>
-                    )}
-                    
-                    {/* Product Image Container with Slider */}
-                    <div className="product-image-container">
-                      <div className="image-slider">
-                        {/* Get all images - support both old and new formats */}
-                        {(product.images && product.images.length > 0 ? product.images : [product.displayImage || product.image]).map((image, index) => {
-                          const isActive = activeSlides[product.id] === index || (activeSlides[product.id] === undefined && index === 0);
-                          return (
-                            <div
-                              key={index}
-                              className={`slide ${isActive ? 'active' : ''}`}
-                              data-index={index}
-                            >
-                              <img 
-                                src={image} 
-                                alt={`${product.name} - View ${index + 1}`}
-                                className="product-image"
-                                onError={(e) => {
-                                  e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {/* Slider Navigation Dots - Only show if multiple images */}
-                      {(product.images && product.images.length > 1) || (!product.images && product.displayImage && product.image && product.displayImage !== product.image) ? (
-                        <div className="slider-dots">
-                          {((product.images && product.images.length > 0) ? product.images : [product.displayImage || product.image]).map((_, index) => (
-                            <button
-                              key={index}
-                              className="dot"
-                              data-index={index}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDotClick(e, product.id);
-                              }}
-                              aria-label={`View image ${index + 1}`}
-                            ></button>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {/* Slider Navigation Arrows - Only show if multiple images */}
-                      {((product.images && product.images.length > 1) || (!product.images && product.displayImage && product.image && product.displayImage !== product.image)) && (
-                        <>
-                          <button
-                            className="slider-arrow prev-arrow"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSlideNavigation(product.id, 'prev');
-                            }}
-                            aria-label="Previous image"
-                          >
-                            <i className="fas fa-chevron-left"></i>
-                          </button>
-                          <button
-                            className="slider-arrow next-arrow"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSlideNavigation(product.id, 'next');
-                            }}
-                            aria-label="Next image"
-                          >
-                            <i className="fas fa-chevron-right"></i>
-                          </button>
-                        </>
-                      )}
-                      
-                      {/* Add to Cart Plus Icon in Corner */}
-                      {!cart.some((item) => item.id === product.id) ? (
-                        <button
-                          className="add-to-cart-plus"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCartClick(product);
-                          }}
-                          title="Add to Cart"
-                        >
-                          <i className="fas fa-plus"></i>
-                        </button>
-                      ) : (
-                        <div className="quantity-controls-corner">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateQuantity(product.id, getQuantity(product.id) - 1);
-                            }}
-                            className="qty-btn-corner minus"
-                          >
-                            -
-                          </button>
-                          <span className="qty-display-corner">{getQuantity(product.id)}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateQuantity(product.id, getQuantity(product.id) + 1);
-                            }}
-                            className="qty-btn-corner plus"
-                          >
-                            +
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Wishlist Icon */}
-                      <button
-                        className="wishlist-btn-corner"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleWishlist(product);
-                        }}
-                        title={wishlistIds.includes(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
-                      >
-                        <i className={`fas fa-heart ${wishlistIds.includes(product.id) ? "active" : ""}`}></i>
-                      </button>
-                    </div>
-
-                    {/* Product Info - Fixed Height Container */}
-                    <div className="product-info-modern">
-                      {/* Real Rating Section */}
-                      <div className="product-rating">
-                        <div className="stars">
-                          {renderStarRating(averageRating)}
-                        </div>
-                        <span className="rating-value">{averageRating.toFixed(1)}</span>
-                        <span className="review-count">({reviewCount})</span>
-                      </div>
-
-                      {/* Product Title - Fixed Height */}
-                      <h3 className="product-title-modern" title={product.name}>
-                        {product.name}
-                      </h3>
-
-                      {/* Real Price Section */}
-                      <div className="price-section">
-                        <span className="current-price">₹{currentPrice.toFixed(2)}</span>
-                        {realDiscountPercentage > 0 && (
-                          <>
-                            <span className="original-price">₹{originalPrice.toFixed(2)}</span>
-                            <span className="discount">
-                              ({realDiscountPercentage}% OFF)
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Category Tag */}
-                      <div className="category-tag">
-                        {product.category || "Uncategorized"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+              <div className="products-grid-container">
+                {sortedProducts.map((product) => (
+                <ProductCard 
+   key={product.id}
+   product={product}
+   onCartUpdate={fetchCartFromFirestore}
+   wishlistIds={wishlistIds}
+   toggleWishlist={toggleWishlist}
+/>
+                ))}
+              </div>
             )}
           </section>
         </main>

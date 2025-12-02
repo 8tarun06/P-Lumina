@@ -14,6 +14,10 @@ import "../wishlist.css";
 import Lottie from "lottie-react";
 import emptyHeart from "../assets/empty-heart.json";
 import { useGlobalModal } from "../context/ModalContext";
+import ProductCard from "../components/ProductCard";
+import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
+import MobileLayout from "../layouts/MobileLayout";
 
 function Wishlist() {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -26,8 +30,27 @@ function Wishlist() {
   const navigate = useNavigate();
   const { showModal } = useGlobalModal();
 
+  // Mobile state
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
+
   // State for image sliders
   const [activeSlides, setActiveSlides] = useState({});
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -40,13 +63,32 @@ function Wishlist() {
       setIsLoggedIn(true);
 
       const wishlistRef = doc(db, "wishlists", user.uid);
-      const unsubscribeSnapshot = onSnapshot(wishlistRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setWishlistItems(data.items || []);
-        } else {
+
+      // Listen for wishlist updates
+      const unsubscribeSnapshot = onSnapshot(wishlistRef, async (docSnap) => {
+        if (!docSnap.exists()) {
           setWishlistItems([]);
+          setLoading(false);
+          return;
         }
+
+        const items = docSnap.data().items || [];
+        const ids = items.map((i) => i.id);
+
+        // 🔥 Fetch FULL product objects from Firestore
+        const fullProducts = [];
+        for (const id of ids) {
+          const productRef = doc(db, "products", id);
+          const productSnap = await getDoc(productRef);
+          if (productSnap.exists()) {
+            fullProducts.push({
+              id,
+              ...productSnap.data()
+            });
+          }
+        }
+
+        setWishlistItems(fullProducts);
         setLoading(false);
       });
 
@@ -137,14 +179,18 @@ function Wishlist() {
   }, [wishlistItems]);
 
   const handleSearchIconClick = () => {
-    setSearchActive(true);
+    if (isMobile) {
+      setIsMobileSearchActive(true);
+    } else {
+      setSearchActive(true);
+    }
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 100);
   };
 
   const startVoiceInput = () => {
-    setSearchActive(true); // Always open the input
+    setSearchActive(true);
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -174,7 +220,7 @@ function Wishlist() {
     };
   };
 
-  // Add to cart function (same as Home.jsx)
+  // Add to cart function
   const addToCart = async (product) => {
     const user = auth.currentUser;
     if (!user) {
@@ -191,7 +237,6 @@ function Wishlist() {
       const cartRef = doc(db, "carts", user.uid);
       const cartSnap = await getDoc(cartRef);
       
-      // Create product data with proper image handling
       const productWithMeta = {
         id: product.id,
         name: product.name,
@@ -286,7 +331,7 @@ function Wishlist() {
     })();
   };
 
-  // Star rating helper method (same as Home.jsx)
+  // Star rating helper method
   const renderStarRating = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -319,295 +364,107 @@ function Wishlist() {
     navigate(`/product/${productId}`);
   };
 
-  return (
-    <>
-      <div className="top-navbar">
-        <div className="logo">
-          <a href="/home">
-            <img id="siteLogo" src="/dark mode .png" alt="Logo" />
+  // Mobile menu handlers
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const closeMobileSearch = () => {
+    setIsMobileSearchActive(false);
+  };
+
+  // Main content with conditional layout based on screen size
+  const wishlistContent = (
+    <section className="wishlist-body">
+      {!isLoggedIn ? (
+        <p className="wishlist-msg">Please login to view your wishlist.</p>
+      ) : loading ? (
+        <p className="wishlist-msg">Loading wishlist...</p>
+      ) : filteredWishlist.length === 0 ? (
+        <div className="empty-wishlist">
+          <Lottie
+            animationData={emptyHeart}
+            loop
+            autoplay
+            className="wishlist-lottie"
+          />
+          <p>Your wishlist is empty</p>
+          <a href="/home" className="wishlist-shop-btn">
+            Start Shopping
           </a>
         </div>
-
-        <div className="search-bar-container">
-          <button className="search-icon" onClick={handleSearchIconClick}>
-            <img
-              src="/public/search.png"
-              alt="Search"
-              className="search-icon-img"
-            />
-          </button>
-          <div className={`search-input-wrapper ${searchActive ? "active" : ""}`}>
-            <div className="search-input-inner">
-              <input
-                type="text"
-                ref={searchInputRef}
-                placeholder="Search Wishlist"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onBlur={() => {
-                  if (searchTerm.trim() === "") {
-                    setTimeout(() => {
-                      setSearchActive(false);
-                    }, 300);
-                  }
-                }}
-              />
-              <button className="mic-icon" onClick={startVoiceInput}>
-                <img
-                  src="/public/mic.png"
-                  alt="Mic"
-                  className="mic-icon-img"
+      ) : isMobile ? (
+        // Mobile layout - single column grid
+        <div className="wishlist-single-grid">
+          <div className="wishlist-header">
+            <h1>My Wishlist</h1>
+            <p className="wishlist-count">{filteredWishlist.length} items</p>
+          </div>
+          
+          <div className="single-grid-container">
+            {filteredWishlist.map((product) => (
+              <div key={product.id} className="wishlist-single-item">
+                <ProductCard
+                  product={product}
+                  wishlistIds={wishlistItems.map((p) => p.id)}
+                  toggleWishlist={() => handleRemoveFromWishlist(product.id)}
+                  onCartUpdate={() => {}}
                 />
-              </button>
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-
-        <div className="wishlist-btn" title="Go to Wishlist">
-          <a href="/wishlist">
-            <i className="fas fa-heart"></i>
-          </a>
+      ) : (
+        // Desktop layout - product grid
+        <div className="product-grid">
+          {filteredWishlist.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              wishlistIds={wishlistItems.map((p) => p.id)}
+              toggleWishlist={() => handleRemoveFromWishlist(product.id)}
+              onCartUpdate={() => {}}
+            />
+          ))}
         </div>
+      )}
+    </section>
+  );
 
-        <div className="cart-icon-wrapper">
-          <a href="/cart" className="cart-link">
-            <i className="fas fa-shopping-cart"></i>
-          </a>
-        </div>
-      </div>
+  // If mobile, use MobileLayout
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        {wishlistContent}
+      </MobileLayout>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <>
+      <Navbar 
+        cartCount={cart.reduce((t, item) => t + (item.quantity || 1), 0)} 
+        isMobile={isMobile}
+        isMobileMenuOpen={isMobileMenuOpen}
+        toggleMobileMenu={toggleMobileMenu}
+        isMobileSearchActive={isMobileSearchActive}
+        setIsMobileSearchActive={setIsMobileSearchActive}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        searchInputRef={searchInputRef}
+        handleSearchIconClick={handleSearchIconClick}
+        startVoiceInput={startVoiceInput}
+        closeMobileSearch={closeMobileSearch}
+      />
 
       <div className="layout">
-        <aside className="sidebar" id="sidebar">
-          <ul>
-            <li><a href="/account">Your Account</a></li>
-            <li><a href="/orders">Your Orders</a></li>
-            <li><a href="/addresses">Addresses</a></li>
-            <li><a href="/about">About Us</a></li>
-            <li><a href="/contact">Contact Us</a></li>
-            <li>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("isLoggedIn");
-                  localStorage.removeItem("userEmail");
-                  auth.signOut().then(() => {
-                    window.location.href = "/login";
-                  });
-                }}
-                className="logout-btn"
-              >
-                Logout
-              </button>
-            </li>
-            <div className="footer">
-              <span className="theme">Princyy</span> @All Rights Reserved
-            </div>
-          </ul>
-        </aside>
-
-        <section className="wishlist-body">
-          {!isLoggedIn ? (
-            <p className="wishlist-msg">Please login to view your wishlist.</p>
-          ) : loading ? (
-            <p className="wishlist-msg">Loading wishlist...</p>
-          ) : filteredWishlist.length === 0 ? (
-            <div className="empty-wishlist">
-              <Lottie
-                animationData={emptyHeart}
-                loop
-                autoplay
-                className="wishlist-lottie"
-              />
-              <p>Your wishlist is empty</p>
-              <a href="/home" className="wishlist-shop-btn">
-                Start Shopping
-              </a>
-            </div>
-          ) : (
-            <div className="product-grid">
-              {filteredWishlist.map((product) => {
-                // Calculate real discount percentage
-                const originalPrice = product.originalPrice || product.price * 1.5; // Fallback if no original price
-                const currentPrice = product.price;
-                const realDiscountPercentage = originalPrice > currentPrice 
-                  ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-                  : 0;
-
-                // Get real reviews data
-                const averageRating = product.averageRating || 0;
-                const reviewCount = product.reviewCount || 0;
-                
-                return (
-                  <div
-                    className="modern-product-card"
-                    key={product.id}
-                    onClick={() => navigateToProductDetail(product.id)}
-                  >
-                    {/* Product Badge - Show only if there's a real discount */}
-                    {realDiscountPercentage > 0 && (
-                      <div className="product-badge">{realDiscountPercentage}% OFF</div>
-                    )}
-                    
-                    {/* Wishlist Badge */}
-                    <div className="product-badge wishlist-badge">WISHLIST</div>
-                    
-                    {/* Product Image Container with Slider */}
-                    <div className="product-image-container">
-                      <div className="image-slider">
-                        {/* Get all images - support both old and new formats */}
-                        {(product.images && product.images.length > 0 ? product.images : [product.displayImage || product.image]).map((image, index) => {
-                          const isActive = activeSlides[product.id] === index || (activeSlides[product.id] === undefined && index === 0);
-                          return (
-                            <div
-                              key={index}
-                              className={`slide ${isActive ? 'active' : ''}`}
-                              data-index={index}
-                            >
-                              <img 
-                                src={image} 
-                                alt={`${product.name} - View ${index + 1}`}
-                                className="product-image"
-                                onError={(e) => {
-                                  e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
-                                }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {/* Slider Navigation Dots - Only show if multiple images */}
-                      {(product.images && product.images.length > 1) || (!product.images && product.displayImage && product.image && product.displayImage !== product.image) ? (
-                        <div className="slider-dots">
-                          {((product.images && product.images.length > 0) ? product.images : [product.displayImage || product.image]).map((_, index) => (
-                            <button
-                              key={index}
-                              className={`dot ${(activeSlides[product.id] === index || (activeSlides[product.id] === undefined && index === 0)) ? 'active' : ''}`}
-                              data-index={index}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDotClick(e, product.id);
-                              }}
-                              aria-label={`View image ${index + 1}`}
-                            ></button>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {/* Slider Navigation Arrows - Only show if multiple images */}
-                      {((product.images && product.images.length > 1) || (!product.images && product.displayImage && product.image && product.displayImage !== product.image)) && (
-                        <>
-                          <button
-                            className="slider-arrow prev-arrow"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSlideNavigation(product.id, 'prev');
-                            }}
-                            aria-label="Previous image"
-                          >
-                            <i className="fas fa-chevron-left"></i>
-                          </button>
-                          <button
-                            className="slider-arrow next-arrow"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSlideNavigation(product.id, 'next');
-                            }}
-                            aria-label="Next image"
-                          >
-                            <i className="fas fa-chevron-right"></i>
-                          </button>
-                        </>
-                      )}
-                      
-                      {/* Add to Cart Plus Icon in Corner */}
-                      {!cart.some((item) => item.id === product.id) ? (
-                        <button
-                          className="add-to-cart-plus"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(product);
-                          }}
-                          title="Add to Cart"
-                        >
-                          <i className="fas fa-plus"></i>
-                        </button>
-                      ) : (
-                        <div className="quantity-controls-corner">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateQuantity(product.id, getQuantity(product.id) - 1);
-                            }}
-                            className="qty-btn-corner minus"
-                          >
-                            -
-                          </button>
-                          <span className="qty-display-corner">{getQuantity(product.id)}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateQuantity(product.id, getQuantity(product.id) + 1);
-                            }}
-                            className="qty-btn-corner plus"
-                          >
-                            +
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Remove from Wishlist Icon */}
-                      <button
-                        className="wishlist-remove-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveFromWishlist(product.id);
-                        }}
-                        title="Remove from Wishlist"
-                      >
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                    </div>
-
-                    {/* Product Info - Fixed Height Container */}
-                    <div className="product-info-modern">
-                      {/* Real Rating Section */}
-                      <div className="product-rating">
-                        <div className="stars">
-                          {renderStarRating(averageRating)}
-                        </div>
-                        <span className="rating-value">{averageRating.toFixed(1)}</span>
-                        <span className="review-count">({reviewCount})</span>
-                      </div>
-
-                      {/* Product Title - Fixed Height */}
-                      <h3 className="product-title-modern" title={product.name}>
-                        {product.name}
-                      </h3>
-
-                      {/* Real Price Section */}
-                      <div className="price-section">
-                        <span className="current-price">₹{currentPrice.toFixed(2)}</span>
-                        {realDiscountPercentage > 0 && (
-                          <>
-                            <span className="original-price">₹{originalPrice.toFixed(2)}</span>
-                            <span className="discount">
-                              ({realDiscountPercentage}% OFF)
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Category Tag */}
-                      <div className="category-tag">
-                        {product.category || "Uncategorized"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        <Sidebar />
+        {wishlistContent}
       </div>
     </>
   );

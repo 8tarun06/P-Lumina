@@ -1951,105 +1951,42 @@ function ProductDetail() {
       <div className={`product-detail ${isMobile ? 'mobile-product-detail' : ''}`}>
         
         {/* Product Gallery Section */}
-        <div className={`product-gallery ${isMobile ? 'mobile-product-gallery' : ''}`}>
-          <div className="main-image-container">
-            <div className="image-zoom-container">
-              {variantImages.length > 0 ? (
-                <>
-                  <img 
-                    src={variantImages[selectedImage] || getFallbackImage()} 
-                    alt={product.name || "Product"}
-                    className={`zoomable-image ${isZoomed ? 'zoomed' : ''}`}
-                    onClick={toggleZoom}
-                    onError={() => handleImageError('main', selectedImage)}
-                    onLoad={() => handleImageLoad('main', selectedImage)}
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                  />
-                  
-                  {/* Navigation Arrows */}
-                  {variantImages.length > 1 && (
-                    <>
-                      <button 
-                        className="image-nav prev"
-                        onClick={prevImage}
-                        disabled={selectedImage === 0}
-                      >
-                        ‹
-                      </button>
-                      <button 
-                        className="image-nav next"
-                        onClick={nextImage}
-                        disabled={selectedImage === variantImages.length - 1}
-                      >
-                        ›
-                      </button>
-                    </>
-                  )}
-                  
-                  {/* Image Counter */}
-                  {variantImages.length > 1 && (
-                    <div className="image-counter">
-                      {selectedImage + 1} / {variantImages.length}
-                    </div>
-                  )}
-                  
-                  {/* Fullscreen Button */}
-                  {!isMobile && (
-                    <button 
-                      className="image-nav"
-                      onClick={toggleFullscreen}
-                      style={{ top: '20px', right: '15px', bottom: 'auto' }}
-                    >
-                      ⛶
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="image-error">
-                  <i className="fas fa-image"></i>
-                  <span>No image available</span>
-                </div>
-              )}
-            </div>
-          </div>
+<div className="product-gallery">
 
-          {/* Enhanced Thumbnail Gallery */}
-          {variantImages.length > 1 && (
-            <div className="thumbnail-scroll-container">
-              <button 
-                className={`scroll-button left ${thumbnailScrollPosition === 0 ? 'hidden' : ''}`}
-                onClick={() => scrollThumbnails('left')}
-              >
-                ‹
-              </button>
-              
-              <div className="thumbnail-scroll">
-                {variantImages.map((img, index) => (
-                  <div
-                    key={index}
-                    className={`thumbnail-item ${index === selectedImage ? 'active' : ''}`}
-                    onClick={() => setSelectedImage(index)}
-                  >
-                    <img
-                      src={img || getFallbackImage()}
-                      alt={`${product.name} thumbnail ${index + 1}`}
-                      onError={() => handleImageError('thumb', index)}
-                      onLoad={() => handleImageLoad('thumb', index)}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                ))}
-              </div>
-              
-              <button 
-                className="scroll-button right"
-                onClick={() => scrollThumbnails('right')}
-              >
-                ›
-              </button>
-            </div>
-          )}
-        </div>
+   {/* MAIN IMAGE */}
+  <div
+    className="main-image-box"
+    onClick={() => setIsFullscreen(true)}
+  >
+    <img
+      src={variantImages[selectedImage]}
+      className="main-product-image"
+      alt=""
+    />
+  </div>
+
+  {/* LEFT THUMBNAILS */}
+  <div className="thumbnail-list">
+    {variantImages.map((img, index) => (
+      <div
+        key={index}
+        className={`thumbnail-item ${selectedImage === index ? "active" : ""}`}
+        onClick={() => setSelectedImage(index)}
+      >
+        <img src={img} alt="" />
+      </div>
+    ))}
+  </div>
+
+  {/* FULLSCREEN VIEW */}
+  {isFullscreen && (
+    <div className="fullscreen-image-modal" onClick={() => setIsFullscreen(false)}>
+      <span className="fullscreen-close">×</span>
+      <img src={variantImages[selectedImage]} alt="" />
+    </div>
+  )}
+
+</div>
 
         {/* Fullscreen Modal */}
         {isFullscreen && !isMobile && (
@@ -2135,12 +2072,7 @@ function ProductDetail() {
             <div className="tax-info">MRP incl. of all taxes</div>
           </div>
           
-          <div className="product-meta">
-            <div className="material-info">
-              <i className="fas fa-gem"></i>
-              <span>Made With Pure 925 Silver</span>
-            </div>
-          </div>
+          
           
           {/* Stock Status Display */}
           {stockStatus && (

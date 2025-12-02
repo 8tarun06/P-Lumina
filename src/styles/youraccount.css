@@ -1,4 +1,4 @@
-/* youraccount.css - Main section only */
+/* youraccount.css - Mobile responsive */
 
 .your-account-container {
   background-color: black;
@@ -13,6 +13,7 @@
   padding: 2rem;
   overflow-y: auto;
   background-color: black;
+  min-height: calc(100vh - 120px);
 }
 
 .account-tiles h2 {
@@ -25,43 +26,209 @@
 /* 🔲 Grid Container for Tiles */
 .tiles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4rem;
   width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
+  max-width: 1200px;
+  margin: 2rem auto 0 auto;
+  padding-bottom: 6em;
   margin-top: 4rem;
-  margin-left: 8rem;
 }
 
 /* 🔳 Individual Tile Card */
 .tile-card {
-  background-color: #111;
-  border-radius: 16px;
-  padding: 1.2rem;
+  background: #0d0d0d;
+  border-radius: 14px;
+  padding: 1.5rem;
   color: white;
-  box-shadow: 0 0 10px rgba(186, 147, 177, 0.4);
+  box-shadow: 0 0 12px rgba(150, 120, 180, 0.25);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: 0.25s ease-out;
+  height: 140px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  height: 130px;
+  justify-content: space-between;
+  border: 1px solid #333;
 }
 
 .tile-card:hover {
-  background-color: #1a1a1a;
-  box-shadow: 0 0 12px rgba(186, 147, 177, 0.7);
+  background: #1b1b1b;
+  transform: translateY(-3px);
+  box-shadow: 0 0 18px rgba(180, 140, 220, 0.55);
+  border-color: #BA93B1;
 }
 
 /* 📝 Text Inside Tile */
 .tile-card h4 {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+  color: #BA93B1;
 }
 
 .tile-card p {
-  font-size: 0.95rem;
-  opacity: 0.9;
+  opacity: 0.85;
+  font-size: 0.9rem;
+  margin: 0;
+  color: #ddd;
+}
+
+/* Mobile Layout Styles */
+.mobile-layout-content .account-tiles {
+  padding: 1rem;
+  margin-top: 0;
+  min-height: calc(100vh - 135px);
+  width: 100%;
+}
+
+.mobile-layout-content .account-tiles h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #BA93B1;
+}
+
+/* Tablet – 3 tiles */
+@media (max-width: 1024px) {
+  .tiles-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+  }
+}
+
+/* Large Mobile – 2 tiles */
+@media (max-width: 768px) {
+  .your-account-container {
+    min-height: auto;
+  }
+
+  .account-tiles {
+    padding: 1rem;
+    margin-top: 0;
+    min-height: calc(100vh - 135px);
+  }
+
+  .account-tiles h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tiles-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding-bottom: 2em;
+  }
+
+  .tile-card {
+    height: 120px;
+    padding: 1.2rem;
+  }
+
+  .tile-card h4 {
+    font-size: 1rem;
+  }
+
+  .tile-card p {
+    font-size: 0.85rem;
+  }
+
+  /* Hide desktop sidebar and navbar in mobile layout */
+  .mobile-layout-wrapper .top-navbar,
+  .mobile-layout-wrapper .sidebar {
+    display: none !important;
+  }
+
+  .mobile-layout-wrapper .layout {
+    flex-direction: column !important;
+    margin-left: 0 !important;
+  }
+}
+
+/* Small Mobile – 1 tile */
+@media (max-width: 480px) {
+  .tiles-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .tile-card {
+    height: 110px;
+    padding: 1rem;
+  }
+
+  .account-tiles h2 {
+    font-size: 1.3rem;
+  }
+
+  .tile-card h4 {
+    font-size: 1rem;
+  }
+
+  .tile-card p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Ultra-mobile devices */
+@media (max-width: 360px) {
+  .tiles-grid {
+    gap: 0.8rem;
+  }
+
+  .tile-card {
+    height: 100px;
+    padding: 0.8rem;
+  }
+
+  .account-tiles {
+    padding: 0.5rem;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .mobile-layout-content .account-tiles {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* Animation for tile cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tile-card {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Stagger animation for tiles */
+.tile-card:nth-child(1) { animation-delay: 0.1s; }
+.tile-card:nth-child(2) { animation-delay: 0.2s; }
+.tile-card:nth-child(3) { animation-delay: 0.3s; }
+.tile-card:nth-child(4) { animation-delay: 0.4s; }
+.tile-card:nth-child(5) { animation-delay: 0.5s; }
+.tile-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Ensure proper touch targets for mobile */
+@media (max-width: 768px) {
+  .tile-card {
+    min-height: 44px; /* Better touch target */
+  }
+}
+
+/* Fix for mobile layout content */
+.mobile-layout-content {
+  background: black;
 }

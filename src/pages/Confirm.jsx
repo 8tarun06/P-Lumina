@@ -285,7 +285,7 @@ function Confirm() {
                 )}
                 
                 {(orderDetails?.appliedCoupons && orderDetails.appliedCoupons.length > 0) && (
-                  <div style={{color: '#28a745', marginTop: '10px'}}>
+                  <div style={{color: '#28a745', marginTop: '10px', marginLeft: '15rem'}}>
                     <strong>Applied Offers:</strong>
                     {orderDetails.appliedCoupons.map(coupon => (
                       <div key={coupon.code} style={{fontSize: '14px'}}>

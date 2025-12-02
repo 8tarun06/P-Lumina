@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiEdit2, FiTrash2, FiMapPin } from "react-icons/fi";
-import { db,auth } from "../firebase-config";
-
+import { db, auth } from "../firebase-config";
 import { 
   collection, 
   addDoc, 
@@ -12,8 +11,10 @@ import {
   deleteDoc,
   getDoc
 } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import MobileLayout from "../layouts/MobileLayout";
 import "../styles/addresspage.css";
 
 function AddressPage() {
@@ -23,7 +24,23 @@ function AddressPage() {
   const [editMode, setEditMode] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const user = auth.currentUser;
+  const navigate = useNavigate();
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -43,30 +60,29 @@ function AddressPage() {
   };
 
   // Auto-populate name and phone from users collection
-useEffect(() => {
-  const unsubscribe = auth.onAuthStateChanged(async (user) => {
-    if (!user) return;
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) return;
 
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userDocRef);
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userDocRef);
 
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        setFormData(prev => ({
-          ...prev,
-          name: userData.name || "",
-          phone: userData.phone || ""
-        }));
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setFormData(prev => ({
+            ...prev,
+            name: userData.name || "",
+            phone: userData.phone || ""
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  });
+    });
 
-  return () => unsubscribe();
-}, []);
-
+    return () => unsubscribe();
+  }, []);
 
   // Fetch addresses from Firestore
   useEffect(() => {
@@ -228,217 +244,231 @@ useEffect(() => {
     }
   };
 
+  // Main address content
+  const addressContent = (
+    <motion.div 
+      className="address-container"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      <motion.div className="address-header" variants={itemVariants}>
+        <h1>Your Addresses</h1>
+        <p>Manage your shipping addresses for faster checkout</p>
+      </motion.div>
+
+      <motion.button
+        className="add-address-btn"
+        onClick={() => setShowForm(true)}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        variants={itemVariants}
+      >
+        <FiPlus /> Add New Address
+      </motion.button>
+
+      <AnimatePresence>
+        {showForm && (
+          <motion.div 
+            className="address-form-container"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h2>{editMode ? 'Edit Address' : 'Add New Address'}</h2>
+            <form onSubmit={handleSubmit}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Address Line 1</label>
+                  <input
+                    type="text"
+                    name="addressLine1"
+                    value={formData.addressLine1}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Address Line 2 (Landmark)</label>
+                  <input
+                    type="text"
+                    name="addressLine2"
+                    value={formData.addressLine2}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>ZIP Code</label>
+                  <input
+                    type="text"
+                    name="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Country</label>
+                  <select
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                  >
+                    <option value="India">India</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                  </select>
+                </div>
+                <div className="form-group checkbox-group">
+                  <input
+                    type="checkbox"
+                    id="defaultAddress"
+                    name="isDefault"
+                    checked={formData.isDefault}
+                    onChange={handleInputChange}
+                  />
+                  <label htmlFor="defaultAddress">Set as default address</label>
+                </div>
+              </div>
+              <div className="form-buttons">
+                <button type="button" className="cancel-btn" onClick={resetForm}>
+                  Cancel
+                </button>
+                <button type="submit" className="save-btn">
+                  {editMode ? 'Update Address' : 'Save Address'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {loading ? (
+        <motion.div 
+          className="loading-spinner"
+          variants={fadeIn}
+        >
+          Loading your addresses...
+        </motion.div>
+      ) : addresses.length === 0 ? (
+        <motion.div 
+          className="empty-state"
+          variants={fadeIn}
+        >
+          <FiMapPin size={48} />
+          <h3>No addresses saved yet</h3>
+          <p>Add your first address to get started</p>
+        </motion.div>
+      ) : (
+        <motion.div 
+          className="address-grid"
+          variants={containerVariants}
+        >
+          {addresses.map(address => (
+            <motion.div 
+              key={address.id}
+              className={`address-card ${address.isDefault ? 'default' : ''}`}
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+            >
+              {address.isDefault && (
+                <div className="default-badge">DEFAULT</div>
+              )}
+              <div className="address-content">
+                <h3>{address.name}</h3>
+                <p>{address.phone}</p>
+                <p>{address.addressLine1}</p>
+                {address.addressLine2 && <p>{address.addressLine2}</p>}
+                <p>{address.city}, {address.state} {address.zipCode}</p>
+                <p>{address.country}</p>
+              </div>
+              <div className="address-actions">
+                <button 
+                  className="action-btn edit-btn"
+                  onClick={() => handleEdit(address)}
+                >
+                  <FiEdit2 /> Edit
+                </button>
+                <button 
+                  className="action-btn delete-btn"
+                  onClick={() => handleDelete(address.id)}
+                >
+                  <FiTrash2 /> Delete
+                </button>
+                {!address.isDefault && (
+                  <button 
+                    className="action-btn default-btn"
+                    onClick={() => setDefaultAddress(address.id)}
+                  >
+                    Set as Default
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </motion.div>
+  );
+
+  // If mobile, use MobileLayout
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        {addressContent}
+      </MobileLayout>
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="address-page">
       <Navbar toggleSidebar={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} toggle={toggleSidebar} />
-      
-      <motion.div 
-        className="address-container"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <motion.div className="address-header" variants={itemVariants}>
-          <h1>Your Addresses</h1>
-          <p>Manage your shipping addresses for faster checkout</p>
-        </motion.div>
-
-        <motion.button
-          className="add-address-btn"
-          onClick={() => setShowForm(true)}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          variants={itemVariants}
-        >
-          <FiPlus /> Add New Address
-        </motion.button>
-
-        <AnimatePresence>
-          {showForm && (
-            <motion.div 
-              className="address-form-container"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2>{editMode ? 'Edit Address' : 'Add New Address'}</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Full Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Phone Number</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Address Line 1</label>
-                    <input
-                      type="text"
-                      name="addressLine1"
-                      value={formData.addressLine1}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Address Line 2 (Landmark)</label>
-                    <input
-                      type="text"
-                      name="addressLine2"
-                      value={formData.addressLine2}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>City</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>State</label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>ZIP Code</label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Country</label>
-                    <select
-                      name="country"
-                      value={formData.country}
-                      onChange={handleInputChange}
-                    >
-                      <option value="India">India</option>
-                      <option value="United States">United States</option>
-                      <option value="United Kingdom">United Kingdom</option>
-                      <option value="Canada">Canada</option>
-                      <option value="Australia">Australia</option>
-                    </select>
-                  </div>
-                  <div className="form-group checkbox-group">
-                    <input
-                      type="checkbox"
-                      id="defaultAddress"
-                      name="isDefault"
-                      checked={formData.isDefault}
-                      onChange={handleInputChange}
-                    />
-                    <label htmlFor="defaultAddress">Set as default address</label>
-                  </div>
-                </div>
-                <div className="form-buttons">
-                  <button type="button" className="cancel-btn" onClick={resetForm}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="save-btn">
-                    {editMode ? 'Update Address' : 'Save Address'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {loading ? (
-          <motion.div 
-            className="loading-spinner"
-            variants={fadeIn}
-          >
-            Loading your addresses...
-          </motion.div>
-        ) : addresses.length === 0 ? (
-          <motion.div 
-            className="empty-state"
-            variants={fadeIn}
-          >
-            <FiMapPin size={48} />
-            <h3>No addresses saved yet</h3>
-            <p>Add your first address to get started</p>
-          </motion.div>
-        ) : (
-          <motion.div 
-            className="address-grid"
-            variants={containerVariants}
-          >
-            {addresses.map(address => (
-              <motion.div 
-                key={address.id}
-                className={`address-card ${address.isDefault ? 'default' : ''}`}
-                variants={itemVariants}
-                whileHover={{ y: -5 }}
-              >
-                {address.isDefault && (
-                  <div className="default-badge">DEFAULT</div>
-                )}
-                <div className="address-content">
-                  <h3>{address.name}</h3>
-                  <p>{address.phone}</p>
-                  <p>{address.addressLine1}</p>
-                  {address.addressLine2 && <p>{address.addressLine2}</p>}
-                  <p>{address.city}, {address.state} {address.zipCode}</p>
-                  <p>{address.country}</p>
-                </div>
-                <div className="address-actions">
-                  <button 
-                    className="action-btn edit-btn"
-                    onClick={() => handleEdit(address)}
-                  >
-                    <FiEdit2 /> Edit
-                  </button>
-                  <button 
-                    className="action-btn delete-btn"
-                    onClick={() => handleDelete(address.id)}
-                  >
-                    <FiTrash2 /> Delete
-                  </button>
-                  {!address.isDefault && (
-                    <button 
-                      className="action-btn default-btn"
-                      onClick={() => setDefaultAddress(address.id)}
-                    >
-                      Set as Default
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </motion.div>
+      {addressContent}
     </div>
   );
 }

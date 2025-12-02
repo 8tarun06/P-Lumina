@@ -151,11 +151,7 @@
     padding-bottom: 70px !important; /* bottom nav height + safe gap */
   }
 
-  /* Make hero and product grid friendlier on mobiles */
-  .amazon-hero-banner { height: 240px !important; }
-  .amazon-hero-content { left: 16px !important; bottom: 48px !important; max-width: 220px !important; }
-  .amazon-hero-title { font-size: 1.4rem !important; }
-  .amazon-shop-now-btn { padding: 8px 14px !important; font-size: 0.9rem !important; }
+
 }
 
 /* Enhanced Mobile Styles */
@@ -410,11 +406,7 @@
     padding: 12px !important;
   }
 
-  /* Hero banner adjustments */
-  .amazon-hero-banner {
-    height: 200px !important;
-    border-radius: 0 !important;
-  }
+
 
   .amazon-hero-content {
     left: 16px !important;
@@ -477,18 +469,13 @@
     font-size: 16px;
   }
 }
-
-/* EMERGENCY FIX - Add this to your CSS file */
 @media (max-width: 768px) {
   .mobile-layout-content {
     padding-top: 60px !important;
-    margin-top: -60px !important; /* This will pull content up */
-  }
-  
-  .amazon-hero-banner {
-    margin-top: -92px !important;
+    margin-top: 0 !important; 
   }
 }
+
 
 /* Smooth transitions for mobile cart */
 .mobile-layout-content {
@@ -1558,8 +1545,619 @@ body, html {
   }
 
   /* Ensure hero doesn’t drop down */
-  .ultra-hero-wrapper {
-    margin-top: -101px !important;
+ 
+
+}
+
+/* ======== FIX SWIPER MOBILE LAYOUT (DO NOT CHANGE) ======== */
+@media (max-width: 768px) {
+
+  /* Fix Swiper container */
+  .swiper {
+    width: 100% !important;
+    height: 260px !important;
+    margin: 0 auto !important;
+    border-radius: 0 !important;
   }
 
+  /* Fix each slide */
+  .swiper-slide {
+    width: 100% !important;
+    height: 260px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  /* Fix image/video scaling */
+  .swiper-slide img,
+  .swiper-slide video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  /* Fix pagination dots */
+  .swiper-pagination {
+    bottom: 10px !important;
+  }
+
+  /* Fix arrows */
+  .swiper-button-prev,
+  .swiper-button-next {
+    color: white !important;
+    top: 50% !important;
+    transform: translateY(-50%);
+  }
+
+
+
+  .mobile-layout-content {
+    margin-top: 0 !important;
+    padding-top: 65px !important;  /* height of mobile top bar */
+  }
+}
+
+
+@media (max-width: 768px) {
+  .ultra-hero-wrapper {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    margin-top: -60px !important; /* Push down below mobile top bar */
+    overflow: hidden !important;
+  }
+
+  .ultra-hero-wrapper img,
+  .ultra-hero-wrapper video {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-body {
+    margin-top: 0 !important;
+    padding-top: 60px !important; /* space below mobile topbar */
+    min-height: auto !important;
+  }
+}
+
+/* Mobile Drawer Menu */
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  height: 100vh;
+  width: 260px;
+  background: black;
+  color: white;
+  z-index: 2000;
+  transition: left 0.3s ease;
+  padding: 20px;
+}
+
+.mobile-drawer.open {
+  left: 0;
+}
+
+.drawer-content ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 40px;
+}
+
+.drawer-content ul li {
+  padding: 15px 0;
+  font-size: 18px;
+  border-bottom: 1px solid #333;
+}
+
+.close-drawer {
+  font-size: 30px;
+  background: none;
+  border: none;
+  color: white;
+  position: absolute;
+  right: 15px;
+  top: 10px;
+}
+
+
+/* Add to src/layouts/responsive-overrides.css - Mobile Sidebar Styles */
+
+/* Mobile Drawer Menu - Enhanced Production Version */
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  height: 100vh;
+  width: 300px;
+  max-width: 85%;
+  background: linear-gradient(180deg, #000000 0%, #141414 100%);
+  color: white;
+  z-index: 2000;
+  transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  padding: 0;
+  box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-drawer.open {
+  left: 0;
+}
+
+.close-drawer {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #BA93B1;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-drawer:hover {
+  background: rgba(186, 147, 177, 0.2);
+  transform: rotate(90deg);
+}
+
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  padding-top: 60px;
+  height: 100%;
+}
+
+/* User Profile Section */
+.mobile-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.user-avatar i {
+  font-size: 50px;
+  color: #BA93B1;
+}
+
+.user-info h3 {
+  margin: 0;
+  font-size: 18px;
+  color: white;
+}
+
+.user-info p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+/* Mobile Sidebar Menu */
+.mobile-sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 30px 0;
+}
+
+.mobile-sidebar-menu li {
+  margin-bottom: 5px;
+}
+
+.mobile-sidebar-menu li a {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 20px;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mobile-sidebar-menu li a:hover {
+  background: rgba(186, 147, 177, 0.2);
+  color: #BA93B1;
+  transform: translateX(5px);
+}
+
+.mobile-sidebar-menu li a i {
+  width: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* Social Media Section for Mobile */
+.mobile-social-section {
+  margin: 30px 0;
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-social-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #BA93B1;
+  text-align: left;
+}
+
+.mobile-social-icons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-social-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 18px;
+  color: white;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.mobile-social-btn:hover {
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.mobile-social-btn.fb:hover { background: #3b5998; }
+.mobile-social-btn.tw:hover { background: #1da1f2; }
+.mobile-social-btn.yt:hover { background: #ff0000; }
+.mobile-social-btn.ig:hover { 
+  background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7); 
+}
+
+/* Logout Button */
+.mobile-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #BA93B1, #d42299);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 20px 0;
+}
+
+.mobile-logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 34, 153, 0.4);
+}
+
+/* Footer */
+.mobile-sidebar-footer {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  padding: 15px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mobile-sidebar-footer .theme {
+  color: #BA93B1;
+  font-weight: 600;
+}
+
+/* Quick Categories Section */
+.mobile-category-quick-access {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 15px 0;
+  margin: 10px 0;
+  border-radius: 0;
+  overflow-x: auto;
+}
+
+.mobile-category-scroll {
+  display: flex;
+  gap: 15px;
+  padding: 0 15px;
+  min-width: max-content;
+}
+
+.mobile-category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mobile-category-item:hover {
+  background: rgba(186, 147, 177, 0.2);
+  transform: translateY(-3px);
+}
+
+.mobile-category-item.active {
+  background: #000000;
+  color: white;
+}
+
+.mobile-category-item.active i {
+  color: white;
+}
+
+.mobile-category-item i {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: #BA93B1;
+}
+
+.mobile-category-item span {
+  font-size: 0.8rem;
+  text-align: center;
+  color: white;
+  white-space: nowrap;
+}
+
+.mobile-category-item.active span {
+  color: white;
+  font-weight: 600;
+}
+
+/* Filter and Sort Section for Mobile */
+.mobile-filter-sort-section {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 15px;
+  background: transparent;
+}
+
+.mobile-sort-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-sort-options label {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mobile-sort-options select {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.mobile-sort-options select option {
+  background: #000;
+  color: white;
+}
+
+/* Overlay for drawer */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile Layout Content adjustments */
+.mobile-layout-content {
+  padding-top: 60px !important;
+  padding-bottom: 65px !important;
+  min-height: 100vh;
+  background: #0b0b0b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .mobile-drawer {
+    width: 280px;
+    max-width: 90%;
+  }
+  
+  .mobile-sidebar-menu li a {
+    padding: 12px 15px;
+    font-size: 15px;
+  }
+  
+  .mobile-category-item {
+    min-width: 65px;
+  }
+  
+  .mobile-category-item i {
+    font-size: 1.3rem;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  .mobile-drawer {
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  
+  .drawer-content {
+    padding-top: max(60px, calc(20px + env(safe-area-inset-top)));
+  }
+}
+
+/* Add/Update in responsive-overrides.css */
+
+/* Mobile Drawer Menu - Enhanced Production Version */
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  height: 100vh;
+  width: 300px;
+  max-width: 85%;
+  background: linear-gradient(180deg, #000000 0%, #141414 100%);
+  color: white;
+  z-index: 2000;
+  transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  padding: 0;
+  box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-drawer.open {
+  left: 0;
+}
+
+/* Hide scrollbar but keep functionality */
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  padding-top: 60px;
+  height: 100%;
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for the entire drawer */
+.mobile-drawer {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.mobile-drawer::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.close-drawer {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #BA93B1;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close-drawer:hover {
+  background: rgba(186, 147, 177, 0.2);
+  transform: rotate(90deg);
+}
+
+/* Overlay for drawer - Prevent background scrolling */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1999;
+  animation: fadeIn 0.3s ease;
+  /* Prevent pointer events on background when sidebar is open */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* When mobile drawer is open, prevent body scrolling */
+body.mobile-drawer-open {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Mobile Layout Content adjustments */
+.mobile-layout-content {
+  padding-top: 60px !important;
+  padding-bottom: 65px !important;
+  min-height: 100vh;
+  background: #0b0b0b;
+  /* Ensure proper scrolling behavior */
+  overflow-x: hidden;
+}
+
+/* Prevent background scrolling when sidebar is open */
+.mobile-layout-wrapper.menu-open {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Quick Categories Section */
+.mobile-category-quick-access {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 15px 0;
+  margin: 10px 0;
+  border-radius: 0;
+  overflow-x: auto;
+  /* Hide scrollbar */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.mobile-category-scroll {
+  display: flex;
+  gap: 15px;
+  padding: 0 15px;
+  min-width: max-content;
 }

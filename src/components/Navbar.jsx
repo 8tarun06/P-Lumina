@@ -85,11 +85,10 @@ function Navbar({
 
   return (
     <nav className="navbar">
+
       {/* Mobile hamburger menu */}
       {isMobile && (
-        <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-          <i className="fas fa-bars"></i>
-        </button>
+        <button className="mobile-menu-toggle" onClick={toggleMobileMenu}></button>
       )}
       
       <div className="top-navbar">
@@ -99,7 +98,7 @@ function Navbar({
           </Link>
         </div>
 
-        {/* Desktop Search Bar - Hidden on mobile */}
+        {/* Desktop Search Bar */}
         {!isMobile && (
           <div className="search-bar-container">
             <button className="search-icon" onClick={handleSearchIconClickLocal}>
@@ -126,7 +125,7 @@ function Navbar({
           </div>
         )}
 
-        {/* Mobile Search Icon - Only show on mobile */}
+        {/* Mobile Search Icon */}
         {isMobile && (
           <button className="mobile-search-icon" onClick={handleSearchIconClickLocal}>
             <i className="fas fa-search"></i>
@@ -168,6 +167,57 @@ function Navbar({
           </div>
         </div>
       )}
+
+      {/* ---------------- GLOBAL MOBILE MENU (Works on ALL pages) ---------------- */}
+      {isMobile && isMobileMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={toggleMobileMenu}>
+          <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
+
+            <div className="mobile-menu-header">
+              <h3>Menu</h3>
+              <button className="mobile-menu-close" onClick={toggleMobileMenu}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="mobile-menu-links">
+
+              <Link to="/home" className="mobile-menu-item" onClick={toggleMobileMenu}>
+                <i className="fas fa-home"></i>
+                <span>Home</span>
+              </Link>
+
+              <Link to="/wishlist" className="mobile-menu-item" onClick={toggleMobileMenu}>
+                <i className="fas fa-heart"></i>
+                <span>Your Wishlist</span>
+              </Link>
+
+              <Link to="/account" className="mobile-menu-item" onClick={toggleMobileMenu}>
+                <i className="fas fa-user"></i>
+                <span>Your Account</span>
+              </Link>
+
+              <Link to="/cart" className="mobile-menu-item" onClick={toggleMobileMenu}>
+                <i className="fas fa-shopping-cart"></i>
+                <span>Your Cart</span>
+              </Link>
+
+            </div>
+
+            <div className="mobile-menu-footer">
+              <p>Keep in touch</p>
+
+              <div className="social-links">
+                <a href="#" className="social-icon"><i className="fab fa-instagram"></i></a>
+                <a href="#" className="social-icon"><i className="fab fa-twitter"></i></a>
+                <a href="#" className="social-icon"><i className="fab fa-facebook"></i></a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </nav>
   );
 }

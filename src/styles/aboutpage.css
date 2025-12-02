@@ -1,4 +1,4 @@
-/* About Page Styles - Matching Profile Settings Theme */
+/* About Page Styles - Mobile Responsive */
 .about-page {
   min-height: 100vh;
   background-color: transparent;
@@ -16,7 +16,7 @@
   text-align: center;
   padding: 0 2rem;
   margin-top: 8rem; /* Account for navbar */
-  margin-left: 10rem;
+  margin-left: 15rem;
 }
 
 .hero-content h1 {
@@ -34,9 +34,8 @@
 /* Main Container */
 .about-container {
   max-width: 1200px;
-
   padding: 4rem 2rem;
-  margin-left: 8rem;
+  margin-left: 15rem;
 }
 
 /* Sections */
@@ -90,16 +89,17 @@
   background: transparent;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 15px rgba(186, 147, 177, 0.1);
   text-align: center;
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-icon {
   width: 70px;
   height: 70px;
   margin: 0 auto 1rem;
-  background-color:#BA93B1;
+  background: rgba(186, 147, 177, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -114,7 +114,7 @@
 }
 
 .stat-card p {
-  color: #666;
+  color: #ffffff;
   font-size: 1rem;
 }
 
@@ -137,11 +137,12 @@
 }
 
 .team-card {
-  background:transparent;
+  background: transparent;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 15px rgba(186, 147, 177, 0.1);
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .team-image {
@@ -151,7 +152,7 @@
   border-radius: 50%;
   background-size: cover;
   background-position: center;
-  border: 3px solid #f0e6ee;
+  border: 3px solid rgba(186, 147, 177, 0.3);
 }
 
 .team-card h3 {
@@ -193,8 +194,9 @@
   background: transparent;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 5px 15px #BA93B1;
+  box-shadow: 0 5px 15px rgba(186, 147, 177, 0.1);
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .value-card h3 {
@@ -217,7 +219,146 @@
   font-size: 1.2rem;
 }
 
-/* Responsive Design */
+/* ===============================
+   Mobile Layout Styles
+================================= */
+
+/* Mobile Layout Content */
+.mobile-layout-content .about-hero {
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+  height: 300px;
+  padding: 0 1rem;
+}
+
+.mobile-layout-content .hero-content h1 {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.mobile-layout-content .hero-content p {
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+.mobile-layout-content .about-container {
+  margin-left: 0 !important;
+  padding: 2rem 1rem !important;
+  width: 100% !important;
+}
+
+/* Mobile Mission Section */
+.mobile-layout-content .mission-section {
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.mobile-layout-content .mission-content h2 {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.mobile-layout-content .mission-content p {
+  font-size: 1rem;
+  text-align: center;
+}
+
+.mobile-layout-content .mission-image {
+  height: 250px;
+  order: -1;
+}
+
+/* Mobile Stats Section */
+.mobile-layout-content .stats-section {
+  margin-bottom: 3rem;
+}
+
+.mobile-layout-content .stats-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.mobile-layout-content .stats-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.mobile-layout-content .stat-card {
+  padding: 1.5rem;
+}
+
+.mobile-layout-content .stat-icon {
+  width: 50px;
+  height: 50px;
+}
+
+.mobile-layout-content .stat-card h3 {
+  font-size: 1.8rem;
+}
+
+.mobile-layout-content .stat-card p {
+  font-size: 0.9rem;
+}
+
+/* Mobile Team Section */
+.mobile-layout-content .team-section {
+  margin-bottom: 3rem;
+}
+
+.mobile-layout-content .team-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.mobile-layout-content .team-grid {
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.mobile-layout-content .team-card {
+  padding: 1.5rem;
+}
+
+.mobile-layout-content .team-image {
+  width: 120px;
+  height: 120px;
+}
+
+.mobile-layout-content .team-card h3 {
+  font-size: 1.2rem;
+}
+
+.mobile-layout-content .bio {
+  font-size: 0.9rem;
+}
+
+/* Mobile Values Section */
+.mobile-layout-content .values-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.mobile-layout-content .values-grid {
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.mobile-layout-content .value-card {
+  padding: 1.5rem;
+}
+
+.mobile-layout-content .value-card h3 {
+  font-size: 1.2rem;
+}
+
+.mobile-layout-content .value-card p {
+  font-size: 0.9rem;
+}
+
+/* ===============================
+   Responsive Design
+================================= */
 @media (max-width: 768px) {
   .mission-section {
     grid-template-columns: 1fr;
@@ -230,11 +371,17 @@
   .about-hero {
     height: 300px;
     margin-top: 70px;
+    margin-left: 0;
   }
   
   .mission-image {
     height: 300px;
     order: -1;
+  }
+  
+  .about-container {
+    margin-left: 0;
+    padding: 2rem 1rem;
   }
 }
 
@@ -249,5 +396,171 @@
   
   .hero-content p {
     font-size: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+  }
+  
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ultra-mobile devices */
+@media (max-width: 360px) {
+  .mobile-layout-content .about-hero {
+    height: 250px;
+  }
+  
+  .mobile-layout-content .hero-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .mobile-layout-content .hero-content p {
+    font-size: 0.9rem;
+  }
+  
+  .mobile-layout-content .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mobile-layout-content .stat-card {
+    padding: 1.2rem;
+  }
+  
+  .mobile-layout-content .mission-image {
+    height: 200px;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .mobile-layout-content .about-container {
+      padding-left: max(1rem, env(safe-area-inset-left)) !important;
+      padding-right: max(1rem, env(safe-area-inset-right)) !important;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    }
+    
+    .mobile-layout-content .about-hero {
+      padding-left: max(1rem, env(safe-area-inset-left)) !important;
+      padding-right: max(1rem, env(safe-area-inset-right)) !important;
+    }
+  }
+}
+
+/* Animation for mobile */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-layout-content .mission-section,
+.mobile-layout-content .stats-section,
+.mobile-layout-content .team-section,
+.mobile-layout-content .values-section {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  .stat-card,
+  .team-card,
+  .value-card {
+    min-height: 44px;
+  }
+}
+
+/* Enhanced card hover effects for desktop */
+@media (min-width: 769px) {
+  .stat-card:hover,
+  .team-card:hover,
+  .value-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(186, 147, 177, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Mobile-specific hover removal for better touch experience */
+@media (max-width: 768px) {
+  .stat-card:hover,
+  .team-card:hover,
+  .value-card:hover {
+    transform: none;
+  }
+  
+  .stat-card:active,
+  .team-card:active,
+  .value-card:active {
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(0.98);
+  }
+}
+
+/* Improved section spacing for mobile */
+.mobile-layout-content section {
+  margin-bottom: 3rem;
+}
+
+/* Enhanced loading spinner */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.loading-spinner::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #BA93B1;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Ensure proper text contrast */
+.mission-content p,
+.stat-card p,
+.team-card .bio,
+.value-card p {
+  color: #ffffff;
+}
+
+/* Improved grid layouts for different screen sizes */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .team-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .values-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

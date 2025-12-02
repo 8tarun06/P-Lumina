@@ -24,6 +24,7 @@ import ContactPage from "./pages/Contactpage";
 import AboutPage from "./pages/AboutPage";
 import ProductDetail from "./pages/ProductDetail";
 import CompleteProfile from "./pages/CompleteProfile";
+import MobileCategories from "./pages/MobileCategories";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +72,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/categories" element={<MobileCategories />} />
         </Routes>
       )}
     </>

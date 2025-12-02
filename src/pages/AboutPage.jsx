@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FiUsers, FiAward, FiShoppingBag, FiGlobe } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import MobileLayout from "../layouts/MobileLayout";
 import { db } from "../firebase-config";
 import { collection, getDocs } from "firebase/firestore";
 import { useGlobalModal } from "../context/ModalContext";
@@ -13,7 +15,23 @@ function AboutPage() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const { showModal } = useGlobalModal();
+  const navigate = useNavigate();
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -80,11 +98,9 @@ function AboutPage() {
     }
   };
 
-  return (
-    <div className="about-page">
-      <Navbar toggleSidebar={toggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} toggle={toggleSidebar} />
-
+  // Main about content
+  const aboutContent = (
+    <>
       <motion.div 
         className="about-hero"
         initial="hidden"
@@ -204,6 +220,24 @@ function AboutPage() {
           </div>
         </motion.section>
       </motion.div>
+    </>
+  );
+
+  // If mobile, use MobileLayout
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        {aboutContent}
+      </MobileLayout>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <div className="about-page">
+      <Navbar toggleSidebar={toggleSidebar} />
+      <Sidebar isOpen={sidebarOpen} toggle={toggleSidebar} />
+      {aboutContent}
     </div>
   );
 }

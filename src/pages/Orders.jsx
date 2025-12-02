@@ -9,7 +9,7 @@ import {
   query,
   where,
   orderBy,
-  onSnapshot, // ✅ added
+  onSnapshot,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +20,7 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import CancelOrderModal from "../components/CancelOrderModal";
 import ReturnOrderModal from "../components/ReturnOrderModal";
+import MobileLayout from "../layouts/MobileLayout";
 import "../orders.css";
 
 function toMillis(timestampOrMs) {
@@ -46,6 +47,21 @@ function Orders() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   useEffect(() => {
     let unsubscribeOrders = null;
@@ -267,10 +283,235 @@ function Orders() {
     ? orders.find((o) => o.id === trackingOrder.id) || trackingOrder
     : null;
 
-  return (
-    <>
-      <Navbar cartCount={cartCount} />
+  // Main orders content
+  const ordersContent = (
+    <div className="orders-container">
+      <motion.h1
+        className="orders-title"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        Your Orders
+      </motion.h1>
 
+      {loading ? (
+        <motion.div
+          className="loading-spinner"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        >
+          <i className="fas fa-spinner" aria-hidden="true"></i>
+        </motion.div>
+      ) : orders.length === 0 ? (
+        <motion.div
+          className="empty-orders"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <i className="fas fa-box-open"></i>
+          <p>You haven't placed any orders yet</p>
+          <a href="/home" className="shop-btn">
+            Start Shopping
+          </a>
+        </motion.div>
+      ) : (
+        <AnimatePresence>
+          {orders.map((order) => {
+            const orderTotal = calculateOrderTotal(order);
+            const orderSavings = calculateOrderSavings(order);
+            const returnDaysRemaining = getReturnDaysRemaining(order);
+
+            return (
+              <motion.div
+                key={order.id}
+                className="order-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                layout
+              >
+                <div className="order-summary">
+                  <div className="order-meta">
+                    <div>
+                      <p className="meta-label">ORDER PLACED</p>
+                      <p className="meta-value">
+                        {toMillis(order.createdAt)
+                          ? format(new Date(toMillis(order.createdAt)), "MMM d, yyyy")
+                          : "Date not available"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="meta-label">TOTAL</p>
+                      <p className="meta-value">₹{orderTotal.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="meta-label">SHIP TO</p>
+                      <p className="meta-value">{order.fullName || "You"}</p>
+                    </div>
+                  </div>
+
+                  {returnDaysRemaining !== null && returnDaysRemaining > 0 && (
+                    <div className="return-days-remaining">
+                      <i className="fas fa-clock" aria-hidden="true"></i>
+                      <span>{returnDaysRemaining} days left to return</span>
+                    </div>
+                  )}
+
+                  {(orderSavings > 0 ||
+                    (order.appliedCoupons && order.appliedCoupons.length > 0)) && (
+                    <div className="order-savings">
+                      <div className="savings-badge">
+                        <i className="fas fa-tag" aria-hidden="true"></i>
+                        {orderSavings > 0
+                          ? `Saved ₹${orderSavings.toFixed(2)}`
+                          : "Coupons Applied"}
+                      </div>
+                      {order.appliedCoupons && (
+                        <div className="applied-coupons-list">
+                          {order.appliedCoupons.map((c, i) => (
+                            <span key={i} className="coupon-tag">
+                              {c.code}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="order-header">
+                    <h3 className="order-id">Order #{order.id?.slice(0, 8)}</h3>
+                    <div className="order-status">
+                      <span
+                        className="status-badge"
+                        style={{ backgroundColor: getStatusColor(order.status) }}
+                      >
+                        {order.status || "Processing"}
+                      </span>
+                      {normalizeStatus(order.status) === "shipped" && (
+                        <p className="delivery-estimate">
+                          Expected delivery: {calculateExpectedDelivery(order.createdAt)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="order-items-container">
+                  {order.items
+                    ?.slice(0, expandedOrder === order.id ? order.items.length : 2)
+                    .map((item, index) => {
+                      const variantDetails = getVariantDetails(item);
+                      const itemPrice = getItemPrice(item);
+                      const itemImage = getItemImage(item);
+
+                      return (
+                        <motion.div
+                          key={index}
+                          className="order-item"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <div className="item-image">
+                            <img
+                              src={itemImage}
+                              alt={item.name || "product"}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "/placeholder.png";
+                              }}
+                            />
+                          </div>
+                          <div className="item-details">
+                            <h4 className="item-name">{item.name}</h4>
+                            {variantDetails && (
+                              <p className="item-variants">
+                                <strong>Variants:</strong> {variantDetails}
+                              </p>
+                            )}
+                            <p className="item-price">₹{parseFloat(itemPrice).toFixed(2)}</p>
+                            <p className="item-qty">Quantity: {item.quantity}</p>
+                            <div className="item-actions">
+                              <button
+                                className="action-btn"
+                                onClick={() => {
+                                  setTrackingOrder(order);
+                                  setShowTrackingModal(true);
+                                }}
+                              >
+                                <i className="fas fa-box" aria-hidden="true"></i> Track Package
+                              </button>
+
+                              <button className="action-btn invoice-btn">
+                                <PDFDownloadLink
+                                  document={<Invoice order={order} user={currentUser} />}
+                                  fileName={`Invoice_${order.id}.pdf`}
+                                  style={{ color: "inherit", textDecoration: "none" }}
+                                >
+                                  {({ loading: pdfLoading }) => (
+                                    <>
+                                      <i className="fas fa-file-invoice" aria-hidden="true"></i>{" "}
+                                      {pdfLoading ? "Preparing..." : "View Invoice"}
+                                    </>
+                                  )}
+                                </PDFDownloadLink>
+                              </button>
+
+                              {canCancelOrder(order) && (
+                                <button
+                                  className="action-btn cancel-btn"
+                                  onClick={() => handleCancelClick(order)}
+                                >
+                                  <i className="fas fa-times-circle" aria-hidden="true"></i>{" "}
+                                  Cancel Order
+                                </button>
+                              )}
+
+                              {canReturnOrder(order) && (
+                                <button
+                                  className="action-btn return-btn"
+                                  onClick={() => handleReturnClick(order)}
+                                >
+                                  <i className="fas fa-undo" aria-hidden="true"></i> Return or
+                                  Replace
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+
+                  {order.items?.length > 2 && (
+                    <div className="order-expand">
+                      <button
+                        onClick={() => toggleOrderExpand(order.id)}
+                        className="expand-btn"
+                      >
+                        {expandedOrder === order.id ? (
+                          <>
+                            <i className="fas fa-chevron-up" aria-hidden="true"></i> Show less
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-chevron-down" aria-hidden="true"></i> Show all
+                            items ({order.items.length})
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      )}
+
+      {/* Modals */}
       {selectedOrder && (
         <CancelOrderModal
           order={selectedOrder}
@@ -329,236 +570,26 @@ function Orders() {
           </motion.div>
         </div>
       )}
+    </div>
+  );
+
+  // If mobile, use MobileLayout
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        {ordersContent}
+      </MobileLayout>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <>
+      <Navbar cartCount={cartCount} />
 
       <div className="layout">
         <Sidebar />
-
-        <div className="orders-container">
-          <motion.h1
-            className="orders-title"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Your Orders
-          </motion.h1>
-
-          {loading ? (
-            <motion.div
-              className="loading-spinner"
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-            >
-              <i className="fas fa-spinner" aria-hidden="true"></i>
-            </motion.div>
-          ) : orders.length === 0 ? (
-            <motion.div
-              className="empty-orders"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <i className="fas fa-box-open"></i>
-              <p>You haven't placed any orders yet</p>
-              <a href="/home" className="shop-btn">
-                Start Shopping
-              </a>
-            </motion.div>
-          ) : (
-            <AnimatePresence>
-              {orders.map((order) => {
-                const orderTotal = calculateOrderTotal(order);
-                const orderSavings = calculateOrderSavings(order);
-                const returnDaysRemaining = getReturnDaysRemaining(order);
-
-                return (
-                  <motion.div
-                    key={order.id}
-                    className="order-card"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    layout
-                  >
-                    <div className="order-summary">
-                      <div className="order-meta">
-                        <div>
-                          <p className="meta-label">ORDER PLACED</p>
-                          <p className="meta-value">
-                            {toMillis(order.createdAt)
-                              ? format(new Date(toMillis(order.createdAt)), "MMM d, yyyy")
-                              : "Date not available"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="meta-label">TOTAL</p>
-                          <p className="meta-value">₹{orderTotal.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <p className="meta-label">SHIP TO</p>
-                          <p className="meta-value">{order.fullName || "You"}</p>
-                        </div>
-                      </div>
-
-                      {returnDaysRemaining !== null && returnDaysRemaining > 0 && (
-                        <div className="return-days-remaining">
-                          <i className="fas fa-clock" aria-hidden="true"></i>
-                          <span>{returnDaysRemaining} days left to return</span>
-                        </div>
-                      )}
-
-                      {(orderSavings > 0 ||
-                        (order.appliedCoupons && order.appliedCoupons.length > 0)) && (
-                        <div className="order-savings">
-                          <div className="savings-badge">
-                            <i className="fas fa-tag" aria-hidden="true"></i>
-                            {orderSavings > 0
-                              ? `Saved ₹${orderSavings.toFixed(2)}`
-                              : "Coupons Applied"}
-                          </div>
-                          {order.appliedCoupons && (
-                            <div className="applied-coupons-list">
-                              {order.appliedCoupons.map((c, i) => (
-                                <span key={i} className="coupon-tag">
-                                  {c.code}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="order-header">
-                        <h3 className="order-id">Order #{order.id?.slice(0, 8)}</h3>
-                        <div className="order-status">
-                          <span
-                            className="status-badge"
-                            style={{ backgroundColor: getStatusColor(order.status) }}
-                          >
-                            {order.status || "Processing"}
-                          </span>
-                          {normalizeStatus(order.status) === "shipped" && (
-                            <p className="delivery-estimate">
-                              Expected delivery: {calculateExpectedDelivery(order.createdAt)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="order-items-container">
-                      {order.items
-                        ?.slice(0, expandedOrder === order.id ? order.items.length : 2)
-                        .map((item, index) => {
-                          const variantDetails = getVariantDetails(item);
-                          const itemPrice = getItemPrice(item);
-                          const itemImage = getItemImage(item);
-
-                          return (
-                            <motion.div
-                              key={index}
-                              className="order-item"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: index * 0.1 }}
-                            >
-                              <div className="item-image">
-                                <img
-                                  src={itemImage}
-                                  alt={item.name || "product"}
-                                  onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = "/placeholder.png";
-                                  }}
-                                />
-                              </div>
-                              <div className="item-details">
-                                <h4 className="item-name">{item.name}</h4>
-                                {variantDetails && (
-                                  <p className="item-variants">
-                                    <strong>Variants:</strong> {variantDetails}
-                                  </p>
-                                )}
-                                <p className="item-price">₹{parseFloat(itemPrice).toFixed(2)}</p>
-                                <p className="item-qty">Quantity: {item.quantity}</p>
-                                <div className="item-actions">
-                                  <button
-                                    className="action-btn"
-                                    onClick={() => {
-                                      setTrackingOrder(order);
-                                      setShowTrackingModal(true);
-                                    }}
-                                  >
-                                    <i className="fas fa-box" aria-hidden="true"></i> Track Package
-                                  </button>
-
-                                  <button className="action-btn invoice-btn">
-                                    <PDFDownloadLink
-                                      document={<Invoice order={order} user={currentUser} />}
-                                      fileName={`Invoice_${order.id}.pdf`}
-                                      style={{ color: "inherit", textDecoration: "none" }}
-                                    >
-                                      {({ loading: pdfLoading }) => (
-                                        <>
-                                          <i className="fas fa-file-invoice" aria-hidden="true"></i>{" "}
-                                          {pdfLoading ? "Preparing..." : "View Invoice"}
-                                        </>
-                                      )}
-                                    </PDFDownloadLink>
-                                  </button>
-
-                                  {canCancelOrder(order) && (
-                                    <button
-                                      className="action-btn cancel-btn"
-                                      onClick={() => handleCancelClick(order)}
-                                    >
-                                      <i className="fas fa-times-circle" aria-hidden="true"></i>{" "}
-                                      Cancel Order
-                                    </button>
-                                  )}
-
-                                  {canReturnOrder(order) && (
-                                    <button
-                                      className="action-btn return-btn"
-                                      onClick={() => handleReturnClick(order)}
-                                    >
-                                      <i className="fas fa-undo" aria-hidden="true"></i> Return or
-                                      Replace
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-
-                      {order.items?.length > 2 && (
-                        <div className="order-expand">
-                          <button
-                            onClick={() => toggleOrderExpand(order.id)}
-                            className="expand-btn"
-                          >
-                            {expandedOrder === order.id ? (
-                              <>
-                                <i className="fas fa-chevron-up" aria-hidden="true"></i> Show less
-                              </>
-                            ) : (
-                              <>
-                                <i className="fas fa-chevron-down" aria-hidden="true"></i> Show all
-                                items ({order.items.length})
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          )}
-        </div>
+        {ordersContent}
       </div>
     </>
   );

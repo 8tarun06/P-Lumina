@@ -1,4 +1,4 @@
-/* Contact Page Styles - Matches Profile Settings Theme */
+/* Contact Page Styles - Mobile Responsive */
 .contact-page {
   min-height: 100vh;
   display: flex;
@@ -13,7 +13,7 @@
   padding: 0 1.5rem;
   width: 100%;
   flex: 1;
-  margin-top:8rem; /* Accounts for navbar */
+  margin-top: 8rem; /* Accounts for navbar */
   margin-left: 8rem;
 }
 
@@ -58,14 +58,16 @@
   background: transparent;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 15px rgba(186, 147, 177, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid #eaeaea;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }
 
 .info-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(186, 147, 177, 0.2);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .info-icon {
@@ -93,11 +95,11 @@
 
 /* Form Styles - Matching Profile Settings */
 .contact-form-container {
-  background:transparent;
+  background: transparent;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eaeaea;
+  box-shadow: 0 5px 15px rgba(186, 147, 177, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .contact-form {
@@ -120,10 +122,12 @@
 .form-group input,
 .form-group textarea {
   padding: 0.75rem 1rem;
-  border: 1px solid #ddd;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  color: #ffffff;
 }
 
 .form-group input:focus,
@@ -131,6 +135,12 @@
   outline: none;
   border-color: #BA93B1;
   box-shadow: 0 0 0 3px rgba(186, 147, 177, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .form-group textarea {
@@ -152,6 +162,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  min-height: 50px;
 }
 
 .submit-btn:disabled {
@@ -161,10 +172,85 @@
 
 .submit-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #d42299, #BA93B1);
+  transform: translateY(-2px);
 }
 
-/* Responsive adjustments */
+/* ===============================
+   Mobile Layout Styles
+================================= */
+
+/* Mobile Layout Content */
+.mobile-layout-content .contact-container {
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+  padding: 1rem !important;
+  width: 100% !important;
+  min-height: calc(100vh - 135px);
+}
+
+.mobile-layout-content .contact-header {
+  margin-bottom: 2rem;
+}
+
+.mobile-layout-content .contact-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-layout-content .contact-header p {
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* Mobile Contact Content */
+.mobile-layout-content .contact-content {
+  gap: 1.5rem;
+}
+
+.mobile-layout-content .contact-info {
+  gap: 1rem;
+}
+
+.mobile-layout-content .info-card {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.mobile-layout-content .info-icon {
+  margin: 0 auto 1rem auto;
+}
+
+/* Mobile Form */
+.mobile-layout-content .contact-form-container {
+  padding: 1.5rem;
+}
+
+.mobile-layout-content .contact-form {
+  gap: 1.2rem;
+}
+
+.mobile-layout-content .form-group input,
+.mobile-layout-content .form-group textarea {
+  padding: 1rem;
+  font-size: 1rem;
+}
+
+.mobile-layout-content .submit-btn {
+  padding: 1.2rem;
+  font-size: 1.1rem;
+  width: 100%;
+}
+
+/* ===============================
+   Responsive Design
+================================= */
 @media (max-width: 768px) {
+  .contact-container {
+    margin-top: 5rem;
+    margin-left: 0;
+    padding: 1rem;
+  }
+  
   .contact-header h1 {
     font-size: 2rem;
   }
@@ -177,7 +263,172 @@
     padding: 1.5rem;
   }
   
-  .contact-container {
-    margin-top: 5rem;
+  .contact-form-container {
+    padding: 1.5rem;
   }
+}
+
+@media (max-width: 480px) {
+  .mobile-layout-content .contact-container {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-layout-content .contact-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .mobile-layout-content .contact-header p {
+    font-size: 0.9rem;
+  }
+  
+  .mobile-layout-content .info-card {
+    padding: 1.2rem;
+  }
+  
+  .mobile-layout-content .contact-form-container {
+    padding: 1rem;
+  }
+  
+  .mobile-layout-content .form-group input,
+  .mobile-layout-content .form-group textarea {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .mobile-layout-content .submit-btn {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Ultra-mobile devices */
+@media (max-width: 360px) {
+  .mobile-layout-content .contact-header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .mobile-layout-content .contact-header p {
+    font-size: 0.85rem;
+  }
+  
+  .mobile-layout-content .info-card {
+    padding: 1rem;
+  }
+  
+  .mobile-layout-content .info-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .mobile-layout-content .info-card p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .mobile-layout-content .contact-container {
+      padding-left: max(1rem, env(safe-area-inset-left)) !important;
+      padding-right: max(1rem, env(safe-area-inset-right)) !important;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    }
+  }
+}
+
+/* Animation for mobile */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-layout-content .info-card,
+.mobile-layout-content .contact-form-container {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  .form-group input,
+  .form-group textarea,
+  .submit-btn,
+  .info-card {
+    min-height: 44px;
+  }
+  
+  .info-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+/* Improved form styling for dark theme */
+.form-group input:focus,
+.form-group textarea:focus {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Enhanced info card hover effects for desktop */
+@media (min-width: 769px) {
+  .info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(186, 147, 177, 0.2);
+  }
+}
+
+/* Mobile-specific hover removal for better touch experience */
+@media (max-width: 768px) {
+  .info-card:hover {
+    transform: none;
+  }
+  
+  .info-card:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
+}
+
+/* Success state styling */
+.submit-btn:disabled.submit-success {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+/* Loading state styling */
+.submit-btn:disabled:not(.submit-success) {
+  background: linear-gradient(135deg, #666, #888);
+}
+
+/* Improved email link styling */
+.info-card[href] {
+  transition: all 0.3s ease;
+}
+
+.info-card[href]:hover {
+  text-decoration: none;
+}
+
+/* Ensure proper text contrast */
+.info-card h3,
+.info-card p {
+  color: #ffffff;
+}
+
+/* Form validation styling */
+.form-group input:invalid:focus,
+.form-group textarea:invalid:focus {
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+.form-group input:valid:focus,
+.form-group textarea:valid:focus {
+  border-color: #2ecc71;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
 }

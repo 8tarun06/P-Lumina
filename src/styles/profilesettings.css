@@ -1,11 +1,11 @@
-/* Profile Settings Container */
+/* Profile Settings Container - Mobile Responsive */
 .profile-settings-container {
   max-width: 900px;
   margin: 2rem auto;
   padding: 2rem;
   background: transparent;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(186, 147, 177, 0.1);
   margin-top: 8rem;
 }
 
@@ -15,7 +15,7 @@
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .avatar-container {
@@ -28,7 +28,7 @@
   height: 120px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -61,12 +61,12 @@
 }
 
 .remove-btn {
-  background-color: #f5f5f5;
+  background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
 .remove-btn:hover {
-  background-color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .profile-title {
@@ -80,7 +80,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 1rem;
 }
 
@@ -99,8 +99,8 @@
 }
 
 .tab-btn:hover {
-  background-color: #000000;
-  color:#db175f;
+  background-color: rgba(186, 147, 177, 0.1);
+  color: #db175f;
 }
 
 .tab-btn.active {
@@ -142,10 +142,12 @@
 .form-group select {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #ddd;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   font-size: 1rem;
   transition: border 0.3s ease;
+  color: #ffffff;
 }
 
 .form-group input:focus,
@@ -153,6 +155,11 @@
   outline: none;
   border-color: #BA93B1;
   box-shadow: 0 0 0 2px rgba(186, 147, 177, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Security Items */
@@ -161,7 +168,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .security-info h3 {
@@ -177,17 +184,17 @@
 
 .security-btn {
   padding: 0.5rem 1.5rem;
-  background-color:#BA93B1;
+  background-color: #BA93B1;
   border: none;
   border-radius: 6px;
-  color:#ffffff;
+  color: #ffffff;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .security-btn:hover {
-  background-color:#db175f;
+  background-color: #db175f;
 }
 
 /* Preference Items */
@@ -196,7 +203,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .preference-info h3 {
@@ -261,9 +268,9 @@ input:checked + .slider:before {
 .danger-zone {
   margin-top: 3rem;
   padding: 1.5rem;
-  background-color:transparent;
+  background-color: transparent;
   border-radius: 8px;
-  border: 1px solid #ffdddd;
+  border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
 .danger-content {
@@ -314,10 +321,10 @@ input:checked + .slider:before {
 }
 
 .save-btn:hover {
-  background-color:#d42299;
+  background-color: #d42299;
 }
 
-
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -342,6 +349,8 @@ input:checked + .slider:before {
   margin-bottom: 12px;
   padding: 10px;
   font-size: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
 }
 
 .modal-buttons {
@@ -354,6 +363,9 @@ input:checked + .slider:before {
   margin: 5px;
   padding: 10px;
   cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .password-wrapper {
@@ -363,7 +375,7 @@ input:checked + .slider:before {
 
 .password-wrapper input {
   width: 100%;
-  padding: 10px 44px 10px 12px; /* gives more space for icon */
+  padding: 10px 44px 10px 12px;
   border-radius: 8px;
 }
 
@@ -398,11 +410,117 @@ input:checked + .slider:before {
   line-height: 1.4;
 }
 
+/* ===============================
+   Mobile Layout Styles
+================================= */
 
+/* Mobile Layout Content */
+.mobile-layout-content .profile-settings-container {
+  margin-top: 0 !important;
+  padding: 1rem !important;
+  width: 100% !important;
+  min-height: calc(100vh - 135px);
+  box-shadow: none;
+}
 
+.mobile-layout-content .profile-header {
+  flex-direction: column;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+}
 
+.mobile-layout-content .profile-title {
+  font-size: 1.5rem;
+  margin-top: 1rem;
+}
 
-/* Responsive Design */
+/* Mobile Tabs */
+.mobile-layout-content .settings-tabs {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-layout-content .tab-btn {
+  justify-content: center;
+  padding: 1rem;
+  font-size: 1rem;
+}
+
+/* Mobile Settings Content */
+.mobile-layout-content .settings-content {
+  padding: 0;
+}
+
+.mobile-layout-content .section-title {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+/* Mobile Security & Preference Items */
+.mobile-layout-content .security-item,
+.mobile-layout-content .preference-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.mobile-layout-content .security-btn {
+  width: 100%;
+  text-align: center;
+}
+
+/* Mobile Danger Zone */
+.mobile-layout-content .danger-zone {
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.mobile-layout-content .danger-content {
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.mobile-layout-content .danger-btn {
+  width: 100%;
+}
+
+/* Mobile Form Groups */
+.mobile-layout-content .form-group input,
+.mobile-layout-content .form-group select {
+  padding: 1rem;
+  font-size: 1rem;
+}
+
+/* Mobile Save Button */
+.mobile-layout-content .save-btn {
+  padding: 1.2rem;
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+}
+
+/* Mobile Modal */
+.mobile-layout-content .modal-content {
+  width: 95%;
+  margin: 1rem;
+  padding: 1.5rem;
+}
+
+.mobile-layout-content .modal-buttons {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-layout-content .modal-buttons button {
+  margin: 0;
+  padding: 0.8rem;
+}
+
+/* ===============================
+   Responsive Design
+================================= */
 @media (max-width: 768px) {
   .profile-header {
     flex-direction: column;
@@ -422,5 +540,149 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+  
+  .danger-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .danger-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-layout-content .profile-settings-container {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-layout-content .profile-title {
+    font-size: 1.3rem;
+  }
+  
+  .mobile-layout-content .tab-btn {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .mobile-layout-content .section-title {
+    font-size: 1.2rem;
+  }
+  
+  .mobile-layout-content .form-group input,
+  .mobile-layout-content .form-group select {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .mobile-layout-content .save-btn {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Ultra-mobile devices */
+@media (max-width: 360px) {
+  .mobile-layout-content .profile-title {
+    font-size: 1.2rem;
+  }
+  
+  .mobile-layout-content .tab-btn {
+    padding: 0.7rem;
+    font-size: 0.85rem;
+  }
+  
+  .mobile-layout-content .section-title {
+    font-size: 1.1rem;
+  }
+}
+
+/* Safe area support for notched devices */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .mobile-layout-content .profile-settings-container {
+      padding-left: max(1rem, env(safe-area-inset-left)) !important;
+      padding-right: max(1rem, env(safe-area-inset-right)) !important;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    }
+  }
+}
+
+/* Animation for mobile */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-layout-content .settings-section,
+.mobile-layout-content .danger-zone {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  .tab-btn,
+  .security-btn,
+  .danger-btn,
+  .save-btn,
+  .form-group input,
+  .form-group select {
+    min-height: 44px;
+  }
+}
+
+/* Enhanced card hover effects for desktop */
+@media (min-width: 769px) {
+  .tab-btn:hover,
+  .security-btn:hover,
+  .save-btn:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Mobile-specific hover removal for better touch experience */
+@media (max-width: 768px) {
+  .tab-btn:hover,
+  .security-btn:hover,
+  .save-btn:hover {
+    transform: none;
+  }
+  
+  .tab-btn:active,
+  .security-btn:active,
+  .save-btn:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Improved form styling for dark theme */
+.form-group select {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.form-group select option {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+/* Enhanced modal styling for mobile */
+@media (max-width: 768px) {
+  .modal-content input {
+    padding: 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .password-wrapper input {
+    padding: 12px 44px 12px 12px;
   }
 }
