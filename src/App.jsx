@@ -6,6 +6,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import "./layouts/responsive-overrides.css";
 import LoadingScreen from "./components/LoadingScreen";
 import ResponsiveWrapper from "./layouts/ResponsiveWrapper";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 
 // Pages
 import SignUp from "./pages/signup";

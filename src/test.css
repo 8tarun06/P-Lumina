@@ -6,7 +6,7 @@
     --grey: #6C7486;
     --grey-light: #CDD9ED;
     --white: #FFF;
-    --green:#e76cca;
+    --green:#ba9c88;
     --sand: #DCB773;
     --sand-light: #EDD9A9;
   }
@@ -142,7 +142,7 @@
   }
   .order .truck .front:after {
     border-radius: 2px 9px 9px 2px;
-    background:#BA93B1;
+    background:#BA9c88;
     width: 24px;
     height: 41px;
     right: 0;
@@ -150,7 +150,7 @@
   .order .truck .front .window {
     overflow: hidden;
     border-radius: 2px 8px 8px 2px;
-    background:#BA93B1;
+    background:#BA9c88;
     transform: perspective(4px) rotateY(3deg);
     width: 22px;
     height: 41px;
@@ -210,8 +210,8 @@
     bottom: 4px;
   }
   .order .box {
-    --start:#BA93B1;
-    --stop: #BA93B1;
+    --start:#BA9c88;
+    --stop: #BA9c88;
     width: 21px;
     height: 21px;
     right: 100%;
@@ -361,6 +361,6 @@
   }
   
   .theme {
-    color:#BA93B1;
+    color:#BA9c88;
   }
   

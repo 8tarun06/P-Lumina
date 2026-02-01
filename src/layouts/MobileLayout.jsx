@@ -53,7 +53,7 @@ function MobileTopBar({ cartCount, onSearchOpen, onMenuToggle }) {
         </button>
 
         <div className="mobile-logo" onClick={handleLogoClick}>
-          <img src="dark mode .png" alt="Logo" style={{ height: 34 }} />
+          <img src="/Vyraa Logo.jpeg" alt="Logo" style={{ height: 34 }} />
         </div>
 
         <button
@@ -116,7 +116,7 @@ function MobileBottomNav() {
         <span>Wishlist</span>
       </button>
       <button 
-        onClick={() => navigate("/account")} 
+        onClick={() => navigate("/profile-settings")} 
         className={`mobile-bottom-btn ${location.pathname === "/account" ? "active" : ""}`} 
         aria-label="Account"
       >
@@ -213,7 +213,7 @@ function MobileSidebar({ isOpen, onClose }) {
               <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="mobile-social-btn yt">
                 <i className="fab fa-youtube"></i>
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="mobile-social-btn ig">
+              <a href="https://www.instagram.com/vyraafashions?igsh=MWtsdmZsNWFmNjVpNw==" target="_blank" rel="noopener noreferrer" className="mobile-social-btn ig">
                 <i className="fab fa-instagram"></i>
               </a>
             </div>
@@ -237,7 +237,7 @@ function MobileSidebar({ isOpen, onClose }) {
 
           {/* Footer */}
           <div className="mobile-sidebar-footer">
-            <span className="theme">Princyy</span> @All Rights Reserved
+            <span className="theme">Vyraa Fashions</span> @All Rights Reserved
           </div>
         </div>
       </div>

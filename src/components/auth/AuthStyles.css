@@ -1,4 +1,4 @@
-/* components/auth/AuthStyles.css - UPDATED FOR FULL PAGE */
+/* components/auth/AuthStyles.css */
 :root {
   --beige-light: #F9F5F0;
   --beige-medium: #F5F0E6;
@@ -17,56 +17,38 @@
   --shadow-hover: rgba(0, 0, 0, 0.12);
 }
 
-/* Reset and base styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  background: white;
-}
-
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--beige-light);
   min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  overflow-x: hidden;
 }
 
-/* Main container - FIXED FOR FULL PAGE */
 .auth-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  position: relative;
   background: linear-gradient(135deg, var(--beige-light) 0%, var(--beige-medium) 100%);
-  overflow-y: auto;
-  z-index: 1000;
+  overflow: hidden;
 }
 
 /* Animated Background */
 .bg-animation {
-  position: fixed;
+  position: absolute;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
   z-index: 0;
-  overflow: hidden;
 }
 
 .bg-circle {
@@ -101,22 +83,6 @@ body {
   animation-delay: -10s;
 }
 
-.bg-circle:nth-child(4) {
-  width: 250px;
-  height: 250px;
-  top: 20%;
-  right: 15%;
-  animation-delay: -15s;
-}
-
-.bg-circle:nth-child(5) {
-  width: 180px;
-  height: 180px;
-  bottom: 30%;
-  right: 5%;
-  animation-delay: -20s;
-}
-
 @keyframes float {
   0%, 100% {
     transform: translateY(0) rotate(0deg);
@@ -137,12 +103,12 @@ body {
   width: 100%;
   max-width: 480px;
   position: relative;
-  z-index: 2;
+  z-index: 1;
   box-shadow: 
-    0 20px 60px #ba9c88,
+    0 20px 60px var(--shadow),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  margin: auto;
+  overflow: hidden;
 }
 
 .auth-card::before {
@@ -153,8 +119,7 @@ body {
   right: 0;
   height: 4px;
   background: linear-gradient(90deg, var(--primary), var(--accent));
-  z-index: 3;
-  border-radius: 24px 24px 0 0;
+  z-index: 2;
 }
 
 .signup-card {
@@ -245,14 +210,7 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  background: lightgray
 }
-
-.placeholder {
-  color: #000000;
-}
-
-
 
 .input-icon {
   position: absolute;
@@ -378,34 +336,26 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: color 0.3s ease;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .forgot-password:hover {
   color: var(--accent);
-  background: rgba(231, 111, 81, 0.1);
 }
 
-/* Error Message */
-.error-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: rgba(230, 57, 70, 0.1);
-  border: 1px solid rgba(230, 57, 70, 0.2);
-  border-radius: 8px;
-  color: var(--error);
+/* Terms Agreement */
+.terms-agreement {
+  margin: 24px 0;
   font-size: 14px;
-  margin-bottom: 20px;
-  animation: shake 0.5s ease-in-out;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+.terms-agreement a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-agreement a:hover {
+  text-decoration: underline;
 }
 
 /* Submit Button */
@@ -536,8 +486,8 @@ body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 4px 12px;
+  border-radius: 6px;
   transition: all 0.3s ease;
 }
 
@@ -545,17 +495,32 @@ body {
   background: rgba(231, 111, 81, 0.1);
 }
 
+/* Error Message */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(230, 57, 70, 0.1);
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 8px;
+  color: var(--error);
+  font-size: 14px;
+  margin-bottom: 20px;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
-  .auth-container {
-    padding: 16px;
-  }
-  
   .auth-card {
     padding: 32px 24px;
     border-radius: 20px;
-    width: 95%;
-    max-width: 400px;
   }
   
   .brand-name {
@@ -578,7 +543,7 @@ body {
 
 @media (max-width: 480px) {
   .auth-container {
-    padding: 12px;
+    padding: 16px;
   }
   
   .auth-card {
@@ -600,61 +565,37 @@ body {
     align-items: flex-start;
     gap: 12px;
   }
-  
-  .form-header h2 {
-    font-size: 22px;
-  }
-  
-  .submit-btn {
-    padding: 16px;
-    font-size: 15px;
-  }
 }
 
-/* For very small screens */
-@media (max-width: 360px) {
-  .auth-card {
-    padding: 20px 16px;
-  }
-  
-  .brand-name {
-    font-size: 24px;
-  }
-  
-  .form-header h2 {
-    font-size: 20px;
-  }
-  
-  .auth-input {
-    padding: 12px 12px 12px 40px;
-    font-size: 14px;
-  }
+/* Additional styles for CompleteProfile */
+.user-info {
+  background: var(--beige-light);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 24px 0;
 }
 
-/* Ensure no scrollbars appear on auth pages */
-.auth-container::-webkit-scrollbar {
-  display: none;
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--text-medium);
+  font-size: 15px;
 }
 
-.auth-container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.info-item:last-child {
+  margin-bottom: 0;
 }
 
-.input-label {
+.info-item svg {
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.helper-text {
+  color: var(--text-light);
   font-size: 13px;
-  font-weight: 600;
-  color: #222;
-  margin-bottom: 6px;
-  display: block;
-}
-
-.input-helper {
-  font-size: 12px;
-  color: #777;
-  margin-top: 6px;
-}
-
-.form-group {
-  margin-bottom: 18px;
+  margin-top: 8px;
+  font-style: italic;
 }

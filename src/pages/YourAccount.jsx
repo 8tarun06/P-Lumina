@@ -96,7 +96,7 @@ function YourAccount() {
       <div className="top-navbar">
         <div className="logo">
           <a href="/home">
-            <img id="siteLogo" src="dark mode .png" alt="Logo" />
+            <img id="siteLogo" src="Vyraa Logo.jpeg" alt="Logo" />
           </a>
         </div>
 

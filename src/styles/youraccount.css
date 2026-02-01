@@ -1,9 +1,9 @@
 /* youraccount.css - Mobile responsive */
 
 .your-account-container {
-  background-color: black;
+  background-color: rgb(255, 255, 255);
   min-height: 100vh;
-  color: #fff;
+  color: #000000;
   font-family: "Segoe UI", sans-serif;
 }
 
@@ -12,13 +12,15 @@
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  background-color: black;
-  min-height: calc(100vh - 120px);
+  background-color: rgb(255, 255, 255);
+  min-height: calc(100vh - 120px);  margin-left: 17rem;
+
+  
 }
 
 .account-tiles h2 {
   font-size: 2rem;
-  color: #fff;
+  color: #000000;
   text-align: center;
   margin-bottom: 2rem;
 }
@@ -37,11 +39,11 @@
 
 /* 🔳 Individual Tile Card */
 .tile-card {
-  background: #0d0d0d;
+  background: #ffffff;
   border-radius: 14px;
   padding: 1.5rem;
-  color: white;
-  box-shadow: 0 0 12px rgba(150, 120, 180, 0.25);
+  color: rgb(0, 0, 0);
+  box-shadow: 0 0 12px rgba(196, 157, 72, 0.25);
   cursor: pointer;
   transition: 0.25s ease-out;
   height: 140px;
@@ -52,10 +54,10 @@
 }
 
 .tile-card:hover {
-  background: #1b1b1b;
+  background: #ffffff;
   transform: translateY(-3px);
-  box-shadow: 0 0 18px rgba(180, 140, 220, 0.55);
-  border-color: #BA93B1;
+  box-shadow: 0 0 18px rgba(198, 155, 53, 0.804);
+  border-color: #BA9c88;
 }
 
 /* 📝 Text Inside Tile */
@@ -63,14 +65,14 @@
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0;
-  color: #BA93B1;
+  color: #000000;
 }
 
 .tile-card p {
   opacity: 0.85;
   font-size: 0.9rem;
   margin: 0;
-  color: #ddd;
+  color: #000000;
 }
 
 /* Mobile Layout Styles */
@@ -84,7 +86,7 @@
 .mobile-layout-content .account-tiles h2 {
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 /* Tablet – 3 tiles */
@@ -230,5 +232,5 @@
 
 /* Fix for mobile layout content */
 .mobile-layout-content {
-  background: black;
+  background: rgb(255, 255, 255);
 }

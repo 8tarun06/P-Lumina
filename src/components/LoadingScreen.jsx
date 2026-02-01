@@ -10,10 +10,10 @@ const LoadingScreen = ({ onFinish }) => {
 
     // Decide which video to show
     if (!hasVisited) {
-      setVideoSrc("/logo-intro.mp4");
+      setVideoSrc("/Vyraa Logo Intro.mp4");
       localStorage.setItem("hasVisited", "true");
     } else {
-      setVideoSrc("/typewriter-intro.mp4");
+      setVideoSrc("/Vyraa Logo Intro.mp4");
     }
 
     // Auto-hide after 5 seconds

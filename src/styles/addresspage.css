@@ -18,7 +18,7 @@
 
 .address-header h1 {
   font-size: 2.5rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 1rem;
   font-weight: 700;
 }
@@ -33,7 +33,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
   border: none;
   border-radius: 6px;
@@ -60,7 +60,7 @@
 
 .address-form-container h2 {
   font-size: 1.5rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 1.5rem;
 }
 
@@ -79,7 +79,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #ffffff;
+  color: #000000;
 }
 
 .form-group input,
@@ -97,7 +97,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #BA93B1;
+  border-color: #BA9c88;
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -141,7 +141,7 @@
 .cancel-btn {
   padding: 0.75rem 1.5rem;
   background: none;
-  border: 1px solid #BA93B1;
+  border: 1px solid #BA9c88;
   border-radius: 6px;
   color: #ffffff;
   font-weight: 500;
@@ -155,7 +155,7 @@
 
 .save-btn {
   padding: 0.75rem 1.5rem;
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
   border: none;
   border-radius: 6px;
@@ -186,7 +186,7 @@
 }
 
 .address-card.default {
-  border: 2px solid #BA93B1;
+  border: 2px solid #BA9c88;
   background: rgba(186, 147, 177, 0.05);
 }
 
@@ -194,7 +194,7 @@
   position: absolute;
   top: -10px;
   right: 20px;
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
   padding: 0.25rem 1rem;
   border-radius: 20px;
@@ -208,12 +208,12 @@
 
 .address-content h3 {
   font-size: 1.2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 0.5rem;
 }
 
 .address-content p {
-  color: #ffffff;
+  color: #000000;
   margin-bottom: 0.25rem;
   line-height: 1.5;
   text-align: left;
@@ -242,8 +242,8 @@
 
 .edit-btn {
   background-color: rgba(186, 147, 177, 0.2);
-  color: #BA93B1;
-  border: 1px solid #BA93B1;
+  color: #BA9c88;
+  border: 1px solid #BA9c88;
 }
 
 .edit-btn:hover {
@@ -281,13 +281,13 @@
 }
 
 .empty-state svg {
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 1rem;
 }
 
 .empty-state h3 {
   font-size: 1.5rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 0.5rem;
 }
 
@@ -299,7 +299,7 @@
 .loading-spinner {
   text-align: center;
   padding: 3rem;
-  color: #BA93B1;
+  color: #BA9c88;
   font-size: 1.2rem;
 }
 
@@ -322,6 +322,7 @@
 
 .mobile-layout-content .address-header p {
   font-size: 1rem;
+  color: #000000;
 }
 
 .mobile-layout-content .add-address-btn {
@@ -446,6 +447,7 @@
   
   .mobile-layout-content .address-header p {
     font-size: 0.9rem;
+    color: #000000;
   }
   
   .mobile-layout-content .form-group input,

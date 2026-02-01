@@ -16,24 +16,24 @@
   
   @keyframes runningshadow {
       0% {
-          box-shadow: 0 0 10px 2px #BA93B1;
+          box-shadow: 0 0 10px 2px #BA9c88;
       }
       25% {
-          box-shadow: -10px 0 20px 2px #e76cca;
+          box-shadow: -10px 0 20px 2px #cda58b;
       }
       50% {
-          box-shadow: 0 -10px 20px 2px #BA93B1;
+          box-shadow: 0 -10px 20px 2px #BA9c88;
       }
       75% {
-          box-shadow: 10px 0 20px 2px #BA93B1;
+          box-shadow: 10px 0 20px 2px #BA9c88;
       }
       100% {
-          box-shadow: 0 10px 20px 2px #e76cca;
+          box-shadow: 0 10px 20px 2px #cda58b;
       }
   }
   
   .order-card h1 {
-    color:#BA93B1;
+    color:#BA9c88;
     margin-bottom: 20px;
   }
   
@@ -43,6 +43,7 @@
     margin: 20px 0;
     border-bottom: 1px solid #eee;
     padding-bottom: 20px;
+    color: #000000;
   }
   
   .order-item {
@@ -85,6 +86,7 @@
     padding: 10px;
     background: transparent;
     border-radius: 5px;
+    color: #000000;
   }
   
   .order-total {

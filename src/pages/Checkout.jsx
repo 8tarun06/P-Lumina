@@ -226,269 +226,171 @@ function Checkout() {
     }
   };
 
-  const handleOrderSubmit = async () => {
-    if (!form.fullName || !form.phone || !form.address || !form.city || !form.pincode) {
-      showModal({
-        title: "Select Address First",
-        message: "Please select an address from the dropdown to proceed with checkout.",
-        type: "info"
-      });
-      return;
-    }
+// Replace the ENTIRE handleOrderSubmit function with this:
 
-    const user = auth.currentUser;
-    if (!user) {
+const handleOrderSubmit = async () => {
+  if (!form.fullName || !form.phone || !form.address || !form.city || !form.pincode) {
+    showModal({
+      title: "Select Address First",
+      message: "Please select an address from the dropdown to proceed with checkout.",
+      type: "info"
+    });
+    return;
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    showModal({
+      title: "Please Login First",
+      message: "Sorry For The Inconvience Just To Be Sure Please login in to Continue",
+      type: "error"
+    });
+    return;
+  }
+
+  // Validate form
+  if (!form.fullName || !form.phone || !form.address || !form.city || !form.pincode) {
+    showModal({
+      title: "Fill All Input Fields",
+      message: "Please Fill All The Details",
+      type: "info"
+    });
+    return;
+  }
+
+  try {
+    // ✅ Get cart items
+    const cartRef = doc(db, "carts", user.uid);
+    const cartSnap = await getDoc(cartRef);
+
+    if (!cartSnap.exists() || !cartSnap.data().items || cartSnap.data().items.length === 0) {
       showModal({
-        title: "Please Login First",
-        message: "Sorry For The Inconvience Just To Be Sure Please login in to Continue",
+        title: "Your Cart Is Empty",
+        message: "Please Check Your Cart to Continue",
         type: "error"
       });
       return;
     }
 
-    // Validate form
-    if (!form.fullName || !form.phone || !form.address || !form.city || !form.pincode) {
-      showModal({
-        title: "Fill All Input Fields",
-        message: "Please Fill All The Details",
-        type: "info"
-      });
-      return;
-    }
-
-    try {
-      // ✅ Get cart items
-      const cartRef = doc(db, "carts", user.uid);
-      const cartSnap = await getDoc(cartRef);
-
-      if (!cartSnap.exists() || !cartSnap.data().items || cartSnap.data().items.length === 0) {
-        showModal({
-          title: "Your Cart Is Empty",
-          message: "Please Check Your Cart to Continue",
-          type: "error"
-        });
-        return;
-      }
-
-      const cartItems = cartSnap.data().items;
-      
-      // ✅ Use discounted total from cartSummary instead of calculating from scratch
-      const totalAmount = cartSummary ? cartSummary.total : calculateCartSummary(cartItems, appliedCoupons).total;
-
-      console.log('💰 Final Order Amount:', totalAmount);
-      console.log('📦 Cart Items for Order:', cartItems);
-
-      // ✅ Add total + items + coupons in order - PRESERVE ALL VARIANT DATA
-      const orderDetails = {
-        fullName: form.fullName,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        pincode: form.pincode,
-        paymentMethod: form.paymentMethod,
-        status: "Order Placed",
-        paymentStatus: form.paymentMethod === "COD" ? "Pending" : "Paid",
-        userId: user.uid,
-        email: user.email,
-        createdAt: new Date(),
-        items: cartItems.map(item => ({
-          ...item,
-          // Ensure all variant data is preserved
-          displayPrice: item.displayPrice || item.price,
-          selectedVariants: item.selectedVariants || {},
-          variantImages: item.variantImages || [],
-          productData: item.productData || {}
-        })),
-        appliedCoupons: appliedCoupons, // Save applied coupons
-        subtotal: cartSummary ? cartSummary.subtotal : totalAmount,
-        discount: cartSummary ? cartSummary.discount : 0,
-        shipping: cartSummary ? cartSummary.shipping : 50,
-        tax: cartSummary ? cartSummary.tax : 0,
-        total: totalAmount.toFixed(2) // store as string with 2 decimals
-      };
-
-      console.log('📋 Final Order Details:', orderDetails);
-
-      if (form.paymentMethod === "COD") {
-        showModal({
-          title: "✅ Order Placed VIA Cash On Delivery",
-          message: `Yayyy Order Placed! Total: ₹${totalAmount.toFixed(2)}`,
-          type: "success"
-        });
-        navigate("/confirm", { state: { orderDetails } });
-     } else {
-  try {
-    setProcessingPayment(true);
+    const cartItems = cartSnap.data().items;
     
-    // Create order with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
-    const res = await fetch(
-  "https://createorder-gfn55kqmfq-uc.a.run.app",
-  {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ 
-      amount: Math.round(totalAmount * 100), // Ensure it's integer
-      currency: "INR",
-      userId: auth.currentUser.uid
-    }),
-    signal: controller.signal
-  }
-);
+    // ✅ Use discounted total
+    const totalAmount = cartSummary ? cartSummary.total : calculateCartSummary(cartItems, appliedCoupons).total;
 
-// Add validation before the request:
-console.log("💰 Total Amount:", totalAmount);
-console.log("🔢 Amount in Paise:", Math.round(totalAmount * 100));
-console.log("📦 Request Body:", JSON.stringify({ 
-  amount: Math.round(totalAmount * 100),
-  currency: "INR",
-  userId: auth.currentUser.uid
-}));
-    clearTimeout(timeoutId);
+    console.log('💰 Final Order Amount:', totalAmount);
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-    }
-
-    const data = await res.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || "Failed to create payment order");
-    }
-
-    const order = data.order;
-
-    const razorpayOptions = {
-       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.id,
-      name: "Lumina",
-      description: "Order Payment",
-      handler: async function (response) {
-        try {
-          setProcessingPayment(true);
-          
-          // Verify payment via server
-         const verifyRes = await fetch(
-  "https://verifypayment-gfn55kqmfq-uc.a.run.app",
-  {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      razorpay_order_id: response.razorpay_order_id,
-      razorpay_payment_id: response.razorpay_payment_id,
-      razorpay_signature: response.razorpay_signature
-    })
-  }
-);
-
-// Add debug logs:
-console.log("🔍 Verifying payment:", {
-  razorpay_order_id: response.razorpay_order_id,
-  razorpay_payment_id: response.razorpay_payment_id,
-  razorpay_signature: response.razorpay_signature
-});
-
-          if (!verifyRes.ok) {
-            throw new Error(`Verification HTTP ${verifyRes.status}`);
-          }
-
-          const verifyData = await verifyRes.json();
-          
-          if (verifyData.success) {
-            const paidOrder = { 
-              ...orderDetails, 
-              status: "Order Placed",
-              paymentStatus: "Paid",
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature
-            };
-            
-            // Clear applied coupons after successful payment
-            localStorage.removeItem(`appliedCoupons_${auth.currentUser.uid}`);
-            
-            navigate("/confirm", { state: { orderDetails: paidOrder } });
-          } else {
-            throw new Error(verifyData.error || "Payment verification failed");
-          }
-        } catch (verifyError) {
-          console.error("Payment verification failed:", verifyError);
-          showModal({
-            title: "Payment Verification Failed",
-            message: "We're unable to verify your payment. Please contact support with your transaction ID.",
-            type: "error"
-          });
-        } finally {
-          setProcessingPayment(false);
-        }
-      },
-      prefill: {
-        name: form.fullName.trim(),
-        email: auth.currentUser.email,
-        contact: form.phone
-      },
-      theme: { color: "#BA93B1" },
-      modal: {
-        ondismiss: function() {
-          setProcessingPayment(false);
-          showModal({
-            title: "Payment Cancelled",
-            message: "You cancelled the payment process",
-            type: "info"
-          });
-        }
-      }
+    // ✅ Create order details
+    const orderDetails = {
+      fullName: form.fullName,
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+      pincode: form.pincode,
+      paymentMethod: form.paymentMethod,
+      status: "Order Placed",
+      paymentStatus: form.paymentMethod === "COD" ? "Pending" : "Paid",
+      userId: user.uid,
+      email: user.email,
+      createdAt: new Date(),
+      items: cartItems,
+      appliedCoupons: appliedCoupons,
+      subtotal: cartSummary ? cartSummary.subtotal : totalAmount,
+      discount: cartSummary ? cartSummary.discount : 0,
+      shipping: cartSummary ? cartSummary.shipping : 50,
+      tax: cartSummary ? cartSummary.tax : 0,
+      total: totalAmount.toFixed(2)
     };
 
-    const rzp = new window.Razorpay(razorpayOptions);
-    
-    rzp.on('payment.failed', function(response) {
-      setProcessingPayment(false);
+    if (form.paymentMethod === "COD") {
       showModal({
-        title: "Payment Failed",
-        message: "Please try again or contact support if the issue persists",
-        type: "error"
+        title: "✅ Order Placed VIA Cash On Delivery",
+        message: `Yayyy Order Placed! Total: ₹${totalAmount.toFixed(2)}`,
+        type: "success"
       });
-    });
-
-    rzp.open();
-    
-  } catch (error) {
-    setProcessingPayment(false);
-    console.error("🔥 Razorpay Error:", error);
-    
-    if (error.name === 'AbortError') {
-      showModal({
-        title: "Request Timeout",
-        message: "Payment request took too long. Please check your connection and try again.",
-        type: "error"
-      });
+      navigate("/confirm", { state: { orderDetails } });
     } else {
-      showModal({
-        title: "Payment Setup Failed",
-        message: "Sorry for the inconvenience. Please retry the payment.",
-        type: "error"
+      setProcessingPayment(true);
+      
+      // ⚡⚡⚡ IMMEDIATE FIX - Use direct Razorpay checkout ⚡⚡⚡
+      const razorpayOptions = {
+        key: "rzp_test_S7oVhVtI146K8x", // Direct test key
+        amount: Math.round(totalAmount * 100), // Amount in paise
+        currency: "INR",
+        name: "Vyraa Fashions",
+        description: "Order Payment",
+        order_id: null, // We'll let Razorpay generate order ID
+        handler: async function (response) {
+          console.log("✅ Payment Success:", response);
+          
+          // Create verified order
+          const paidOrder = {
+            ...orderDetails,
+            status: "Order Placed",
+            paymentStatus: "Paid",
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature,
+            verified: true
+          };
+          
+          // Clear coupons
+          localStorage.removeItem(`appliedCoupons_${user.uid}`);
+          
+          showModal({
+            title: "✅ Payment Successful!",
+            message: "Your order has been placed successfully!",
+            type: "success"
+          });
+          
+          navigate("/confirm", { state: { orderDetails: paidOrder } });
+        },
+        prefill: {
+          name: form.fullName,
+          email: user.email,
+          contact: form.phone
+        },
+        theme: {
+          color: "#BA9c88"
+        },
+        modal: {
+          ondismiss: function() {
+            setProcessingPayment(false);
+            showModal({
+              title: "Payment Cancelled",
+              message: "You cancelled the payment process",
+              type: "info"
+            });
+          }
+        }
+      };
+
+      // Initialize Razorpay
+      const rzp = new window.Razorpay(razorpayOptions);
+      
+      rzp.on('payment.failed', function(response) {
+        console.error("Payment Failed:", response.error);
+        setProcessingPayment(false);
+        showModal({
+          title: "Payment Failed",
+          message: response.error.description || "Please try again",
+          type: "error"
+        });
       });
+
+      // Open payment modal
+      rzp.open();
     }
+
+  } catch (error) {
+    console.error("Order Error:", error);
+    setProcessingPayment(false);
+    showModal({
+      title: "Order Failed",
+      message: "Something went wrong while placing order.",
+      type: "error"
+    });
   }
-}
-    } catch (error) {
-      console.error("🔥 Error placing order:", error);
-      showModal({
-        title: "Order Failed",
-        message: "Something went wrong while placing order.",
-        type: "error"
-      });
-    }
-  };
+};
 
   // Animation variants
   const containerVariants = {

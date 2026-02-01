@@ -1,0 +1,277 @@
+/* EXACT SAME WAVE TRANSITION PROPERTIES AS BEFORE */
+@property --time {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+/* Keep the exact same view-transition delay */
+::view-transition-old(root) {
+  animation-delay: 800ms;
+}
+
+/* DESKTOP WAVE TRANSITION */
+@media (min-width: 769px) {
+  ::view-transition-new(root) {
+    /* Same variables as before */
+    --humps: 1.5;
+    --pi: 3.14159;
+    --lr: calc(var(--humps) * var(--pi));
+    --time: 0;
+
+    /* Same animation name and timing */
+    animation: wave-move 1s ease-in both;
+
+    /* EXACT SAME 51-POINT CLIP-PATH AS BEFORE */
+    clip-path: polygon(
+      0% 0%,
+      0% calc(cos(calc(0.00 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      2% calc(cos(calc(0.02 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      4% calc(cos(calc(0.04 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      6% calc(cos(calc(0.06 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      8% calc(cos(calc(0.08 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      10% calc(cos(calc(0.10 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      12% calc(cos(calc(0.12 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      14% calc(cos(calc(0.14 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      16% calc(cos(calc(0.16 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      18% calc(cos(calc(0.18 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      20% calc(cos(calc(0.20 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      22% calc(cos(calc(0.22 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      24% calc(cos(calc(0.24 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      26% calc(cos(calc(0.26 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      28% calc(cos(calc(0.28 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      30% calc(cos(calc(0.30 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      32% calc(cos(calc(0.32 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      34% calc(cos(calc(0.34 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      36% calc(cos(calc(0.36 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      38% calc(cos(calc(0.38 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      40% calc(cos(calc(0.40 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      42% calc(cos(calc(0.42 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      44% calc(cos(calc(0.44 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      46% calc(cos(calc(0.46 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      48% calc(cos(calc(0.48 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      50% calc(cos(calc(0.50 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      52% calc(cos(calc(0.52 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      54% calc(cos(calc(0.54 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      56% calc(cos(calc(0.56 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      58% calc(cos(calc(0.58 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      60% calc(cos(calc(0.60 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      62% calc(cos(calc(0.62 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      64% calc(cos(calc(0.64 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      66% calc(cos(calc(0.66 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      68% calc(cos(calc(0.68 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      70% calc(cos(calc(0.70 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      72% calc(cos(calc(0.72 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      74% calc(cos(calc(0.74 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      76% calc(cos(calc(0.76 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      78% calc(cos(calc(0.78 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      80% calc(cos(calc(0.80 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      82% calc(cos(calc(0.82 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      84% calc(cos(calc(0.84 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      86% calc(cos(calc(0.86 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      88% calc(cos(calc(0.88 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      90% calc(cos(calc(0.90 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      92% calc(cos(calc(0.92 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      94% calc(cos(calc(0.94 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      96% calc(cos(calc(0.96 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      98% calc(cos(calc(0.98 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      100% calc(cos(calc(1.00 + var(--time)) * var(--lr)) * 10% + calc(100% * var(--time))),
+      100% 0%
+    );
+  }
+
+  /* EXACT SAME KEYFRAMES AS BEFORE */
+  @keyframes wave-move {
+    from { --time: -0.1; }
+    to   { --time: 1.1; }
+  }
+}
+
+/* MOBILE CIRCLE FADE-IN TRANSITION */
+@media (max-width: 768px) {
+  ::view-transition-new(root) {
+    animation: circle-in 500ms;
+  }
+
+  @keyframes circle-in {
+    from { clip-path: circle(0% at 50% 0%); }
+    to { clip-path: circle(120% at 50% 0%); }
+  }
+}
+
+/* PRODUCTION ENHANCEMENTS (without changing the wave) */
+
+/* Add reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+  
+  ::view-transition-new(root) {
+    clip-path: none !important;
+  }
+}
+
+/* ===========================================
+   UPDATED THEME SYSTEM - TOGGLE ONLY
+   =========================================== */
+
+/* Light theme (default) */
+:root {
+  color-scheme: light;
+  
+  --clr-body-bg: hsl(10, 25%, 95%);
+  --clr-card-bg: hsl(10, 25%, 98%);
+  --clr-text: #232323;
+  --clr-heading: #ba9c88;
+  --clr-border: hsl(10, 20%, 85%);
+  --clr-toggle-bg: #f0f0f0;
+  --clr-toggle-thumb: #ffffff;
+  --clr-toggle-active: #ba9c88;
+}
+
+/* Dark theme */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  
+  --clr-body-bg: hsl(0, 0%, 0%);
+  --clr-card-bg: hsl(168, 50%, 4%);
+  --clr-text: #ffffff;
+  --clr-heading: #ba9c88;
+  --clr-border: hsl(168, 30%, 15%);
+  --clr-toggle-bg: #333333;
+  --clr-toggle-thumb: #ffffff;
+  --clr-toggle-active: #ba9c88;
+}
+
+/* ===========================================
+   TOGGLE BUTTON STYLES - ICON BUTTON
+   =========================================== */
+
+.theme-toggle-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: transparent;
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--clr-border);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  font-family: inherit;
+  color: var(--clr-text);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+  background: var(--clr-border);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--clr-heading);
+  outline-offset: 2px;
+}
+
+.theme-toggle:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+/* Icon animation */
+.toggle-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  position: absolute;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  transform-origin: center;
+}
+
+.toggle-icon--sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle[aria-pressed="true"] .toggle-icon--sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0);
+}
+
+.toggle-icon--moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0);
+}
+
+.theme-toggle[aria-pressed="true"] .toggle-icon--moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* ===========================================
+   GLOBAL STYLES FOR YOUR ECOMMERCE APP
+   =========================================== */
+
+/* Apply theme colors to body */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  
+  /* Production enhancements */
+  background: var(--clr-body-bg);
+  color: var(--clr-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN
+   =========================================== */
+
+@media (max-width: 768px) {
+  .theme-toggle-container {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem;
+  }
+}
+
+/* ===========================================
+   ACCESSIBILITY
+   =========================================== */
+
+:focus-visible {
+  outline: 2px solid var(--clr-heading);
+  outline-offset: 2px;
+}
+
+/* Loading state for transitions */
+body.wave-transition-active * {
+  cursor: wait;
+}

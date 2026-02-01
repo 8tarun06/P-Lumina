@@ -52,12 +52,12 @@
 }
 
 .upload-btn {
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
 }
 
 .upload-btn:hover {
-  background-color: #db175f;
+  background-color: #d58e3d;
 }
 
 .remove-btn {
@@ -71,7 +71,7 @@
 
 .profile-title {
   font-size: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin: 0;
 }
 
@@ -100,11 +100,11 @@
 
 .tab-btn:hover {
   background-color: rgba(186, 147, 177, 0.1);
-  color: #db175f;
+  color: #d58e3d;
 }
 
 .tab-btn.active {
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
 }
 
@@ -115,7 +115,7 @@
 
 .section-title {
   font-size: 1.5rem;
-  color: #ffffff;
+  color: #000000;
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
@@ -135,7 +135,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #ffffff;
+  color: #000000;
 }
 
 .form-group input,
@@ -153,8 +153,8 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #BA93B1;
-  box-shadow: 0 0 0 2px rgba(186, 147, 177, 0.2);
+  border-color: #BA9c88;
+  box-shadow: 0 0 0 2px rgba(211, 155, 56, 0.2);
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -184,7 +184,7 @@
 
 .security-btn {
   padding: 0.5rem 1.5rem;
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   border: none;
   border-radius: 6px;
   color: #ffffff;
@@ -194,7 +194,7 @@
 }
 
 .security-btn:hover {
-  background-color: #db175f;
+  background-color: #d58e3d;
 }
 
 /* Preference Items */
@@ -257,7 +257,7 @@
 }
 
 input:checked + .slider {
-  background-color: #BA93B1;
+  background-color: #BA9c88;
 }
 
 input:checked + .slider:before {
@@ -306,7 +306,7 @@ input:checked + .slider:before {
   width: 100%;
   padding: 1rem;
   margin-top: 2rem;
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
   border: none;
   border-radius: 6px;
@@ -445,6 +445,7 @@ input:checked + .slider:before {
   justify-content: center;
   padding: 1rem;
   font-size: 1rem;
+  color :#000000;
 }
 
 /* Mobile Settings Content */
@@ -493,7 +494,10 @@ input:checked + .slider:before {
   padding: 1rem;
   font-size: 1rem;
 }
-
+.mobile-layout-content .form-group input::placeholder {
+  font-size: 1rem;
+  color: #2f2e2e;
+}
 /* Mobile Save Button */
 .mobile-layout-content .save-btn {
   padding: 1.2rem;

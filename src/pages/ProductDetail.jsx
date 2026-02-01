@@ -1,5 +1,5 @@
 // src/pages/ProductDetail.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added useRef
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   doc,
@@ -17,10 +17,12 @@ import {
   serverTimestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { db, auth } from '../firebase-config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Added Firebase Storage functions
+import { db, auth, storage } from '../firebase-config'; // Added storage
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MobileLayout from '../layouts/MobileLayout';
+import ProductCard from '../components/ProductCard'; // ADDED: Import global ProductCard
 import '../home.css';
 import '../styles/productdetail.css';
 import { useGlobalModal } from '../context/ModalContext';
@@ -45,6 +47,47 @@ const useMobileDetection = () => {
   }, []);
 
   return isMobile;
+};
+
+// SPECIFICATION ICONS
+const specIcons = {
+  material: "fas fa-cube",
+  weight: "fas fa-balance-scale",
+  dimensions: "fas fa-ruler-combined",
+  size: "fas fa-ruler",
+  color: "fas fa-palette",
+  brand: "fas fa-tag",
+  model: "fas fa-tools",
+  warranty: "fas fa-shield-alt",
+  battery: "fas fa-battery-three-quarters",
+  storage: "fas fa-hdd",
+  ram: "fas fa-memory",
+  type: "fas fa-layer-group",
+  default: "fas fa-info-circle"
+};
+
+const getSpecIcon = (key) => {
+  const normalized = key.toLowerCase();
+  return specIcons[normalized] || specIcons.default;
+};
+
+// Haptic feedback for mobile
+const triggerHapticFeedback = (type = 'light') => {
+  if ('vibrate' in navigator) {
+    switch(type) {
+      case 'light':
+        navigator.vibrate(10);
+        break;
+      case 'medium':
+        navigator.vibrate(30);
+        break;
+      case 'heavy':
+        navigator.vibrate(50);
+        break;
+      default:
+        navigator.vibrate(10);
+    }
+  }
 };
 
 // ShareButton Component
@@ -178,6 +221,7 @@ const WishlistButton = ({
     
     setTimeout(() => setIsAnimating(false), 600);
   };
+  
 
   return (
     <button
@@ -219,6 +263,151 @@ const WishlistButton = ({
   );
 };
 
+// Premium Copy Button Component with Animations
+const CopyButton = ({ 
+  text = '', 
+  size = 'medium', 
+  className = '',
+  onCopy,
+  children,
+  ...props 
+}) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!text) return;
+    
+    setIsAnimating(true);
+    
+    try {
+      // Try using the Clipboard API first
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      
+      setIsCopied(true);
+      
+      if (onCopy) {
+        onCopy({ success: true, text });
+      }
+      
+      // Show success state for 2 seconds
+      setTimeout(() => {
+        setIsCopied(false);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error copying text:', error);
+      if (onCopy) {
+        onCopy({ success: false, error });
+      }
+    } finally {
+      setTimeout(() => setIsAnimating(false), 600);
+    }
+  };
+
+  return (
+    <button
+      className={`copy-button ${size} ${isAnimating ? 'animating' : ''} ${isCopied ? 'copied' : ''} ${className}`}
+      onClick={handleCopy}
+      disabled={isAnimating}
+      aria-label={isCopied ? "Copied!" : `Copy "${text}"`}
+      {...props}
+    >
+      <span className="copy-button-content">
+        <span className="copy-icon">
+          {isCopied ? (
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="currentColor"
+            >
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          ) : (
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          )}
+        </span>
+        <span className="copy-text">
+          {isCopied ? 'Copied!' : (children || 'Copy')}
+        </span>
+      </span>
+      
+      {/* Premium animation elements */}
+      <span className="copy-confetti">
+        {[...Array(12)].map((_, i) => (
+          <span key={i} className="confetti-piece" style={{ '--i': i }} />
+        ))}
+      </span>
+      
+      <span className="copy-wave" />
+      <span className="copy-sparkles">
+        {[...Array(8)].map((_, i) => (
+          <span key={i} className="sparkle" style={{ '--i': i }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L9 12 2 12 8 17 5 22 12 17 19 22 16 17 22 12 15 12z"/>
+            </svg>
+          </span>
+        ))}
+      </span>
+    </button>
+  );
+};
+
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong.</h2>
+          <button onClick={() => window.location.reload()}>
+            Refresh Page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -258,6 +447,10 @@ function ProductDetail() {
   const [isZoomed, setIsZoomed] = useState(false);
   const [thumbnailScrollPosition, setThumbnailScrollPosition] = useState(0);
 
+  // Coupon states
+  const [coupons, setCoupons] = useState([]);
+  const [couponLoading, setCouponLoading] = useState(true);
+
   // Fix horizontal scroll
   useEffect(() => {
     // Prevent horizontal scroll on mount
@@ -287,6 +480,25 @@ function ProductDetail() {
         message: "Unable to share at the moment. Please try again.",
         type: "error"
       });
+    }
+  };
+
+  // ADDED: Function to fetch cart count
+  const fetchCartCount = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const cartRef = doc(db, "carts", user.uid);
+      const cartSnap = await getDoc(cartRef);
+      if (cartSnap.exists()) {
+        const items = cartSnap.data().items || [];
+        setCartCount(items.reduce((total, item) => total + (item.quantity || 1), 0));
+      } else {
+        setCartCount(0);
+      }
+    } catch (err) {
+      console.error("Error loading cart count:", err.message);
     }
   };
 
@@ -327,6 +539,29 @@ function ProductDetail() {
 
     return () => unsubscribe();
   }, [id, navigate, showModal]);
+
+  // Coupon fetching useEffect
+  useEffect(() => {
+    const couponsRef = collection(db, "coupons");
+
+    const unsubscribe = onSnapshot(couponsRef, (snapshot) => {
+      const now = new Date();
+
+      const fetched = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(c => 
+          c.isActive === true &&
+          new Date(c.expiryDate) > now &&
+          (c.usageLimit === undefined || c.usedCount < c.usageLimit)
+        )
+        .sort((a, b) => a.minOrder - b.minOrder);
+
+      setCoupons(fetched);
+      setCouponLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Enhanced image navigation functions
   const nextImage = () => {
@@ -392,7 +627,7 @@ function ProductDetail() {
     }));
   };
 
-  // Add product to recently viewed
+  // Add product to recently viewed - FIXED VERSION
   const addToRecentlyViewed = async (productData) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -409,16 +644,23 @@ function ProductDetail() {
       // Remove if already exists
       items = items.filter(item => item.id !== productData.id);
       
-      // Add to beginning
+      // Add to beginning - ensure all fields have values
       const productToAdd = {
-        id: productData.id,
-        name: productData.name,
-        price: productData.price,
-        originalPrice: productData.originalPrice,
+        id: productData.id || '',
+        name: productData.name || '',
+        price: productData.price || 0,
+        originalPrice: productData.originalPrice || productData.price || 0,
         image: productData.images?.[0] || productData.image || '',
         category: productData.category || '',
         viewedAt: new Date().toISOString()
       };
+
+      // Filter out any undefined/null values
+      Object.keys(productToAdd).forEach(key => {
+        if (productToAdd[key] === undefined || productToAdd[key] === null) {
+          productToAdd[key] = '';
+        }
+      });
 
       items.unshift(productToAdd);
 
@@ -759,9 +1001,9 @@ function ProductDetail() {
     return null;
   };
 
-  // Get fallback image
+  // Get fallback image - UPDATED to use local placeholder
   const getFallbackImage = () => {
-    return "/api/placeholder/400/400";
+    return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='16' fill='%23999' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E";
   };
 
   // Calculate discount percentage
@@ -1090,6 +1332,21 @@ function ProductDetail() {
         type: "error"
       });
     }
+  };
+
+  const handleAddToCart = async () => {
+    triggerHapticFeedback('medium');
+    await addToCart();
+  };
+
+  const handleBuyNow = async () => {
+    triggerHapticFeedback('medium');
+    await buyNow();
+  };
+
+  const handleToggleWishlist = async () => {
+    triggerHapticFeedback('light');
+    await toggleWishlist();
   };
 
   const addToCart = async () => {
@@ -1484,6 +1741,101 @@ function ProductDetail() {
     );
   };
 
+  // Get generated description function
+  const getGeneratedDescription = (product) => {
+    if (product.description) return product.description;
+
+    const name = product.name || "This item";
+    const category = product.category || "product";
+    const keywords = product.keywords?.join(", ") || "";
+
+    return `${name} is a high-quality ${category} designed to meet your daily needs. Featuring ${keywords}, it's perfect for any occasion.`;
+  };
+
+  // Get AI generated description
+  const generateAIDescription = () => {
+    if (!product) return "";
+
+    const name = product.name || "this product";
+    const category = product.category || "item";
+
+    const specs = product.specifications
+      ? (Array.isArray(product.specifications)
+          ? product.specifications.map(s => `${s.key}: ${s.value}`).join(", ")
+          : Object.entries(product.specifications).map(([k, v]) => `${k}: ${v}`).join(", "))
+      : "";
+
+    return `${name} is crafted with precision and engineered to deliver exceptional quality. This ${category} combines modern design with practical functionality, making it ideal for everyday use. Key Features: • Premium build and excellent durability • Smooth performance with reliable components • Comfortable, stylish and made for long-term use • Specifications include: ${specs} Experience a perfect balance of aesthetics, utility, and value with ${name}.`;
+  };
+
+  // Define finalDescription for use in JSX
+  const finalDescription = product && product.description && product.description.length > 20
+    ? product.description
+    : product ? generateAIDescription() : "";
+
+  // Mobile Sticky Action Buttons Component
+  const MobileStickyActions = () => {
+    if (!product || isMobile === false) return null;
+
+    return (
+      <div className="mobile-action-buttons-sticky">
+        <div className="mobile-sticky-actions">
+          {isProductInCart ? (
+            <div className="quantity-controls mobile-quantity-controls">
+              <button 
+                onClick={() => updateCartQuantity(quantity - 1)}
+                disabled={!isVariantInStock() || quantity <= 1}
+                className="quantity-btn minus"
+                title="Decrease quantity"
+              >
+                <i className="fas fa-minus"></i>
+              </button>
+              <span className="quantity-display">
+                <i className="fas fa-shopping-cart"></i> {quantity}
+              </span>
+              <button 
+                onClick={() => updateCartQuantity(quantity + 1)}
+                disabled={!isVariantInStock()}
+                className="quantity-btn plus"
+                title="Increase quantity"
+              >
+                <i className="fas fa-plus"></i>
+              </button>
+            </div>
+          ) : (
+            <button
+              className="add-to-cart mobile-add-to-cart"
+              onClick={handleAddToCart}
+              disabled={!isVariantInStock()}
+              title={!isVariantInStock() ? "This variant is out of stock" : "Add to cart"}
+            >
+              <i className="fas fa-shopping-cart"></i>
+              {!isVariantInStock() ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+          )}
+
+          <button 
+            className="buy-now mobile-buy-now" 
+            onClick={handleBuyNow}
+            disabled={!isVariantInStock()}
+            title={!isVariantInStock() ? "This variant is out of stock" : "Buy now"}
+          >
+            <i className="fas fa-bolt"></i>
+            {!isVariantInStock() ? 'Unavailable' : 'Buy Now'}
+          </button>
+
+          <WishlistButton
+            isActive={wishlistIds.includes(product.id)}
+            size="small"
+            className="mobile-wishlist-btn"
+            onClick={handleToggleWishlist}
+            title={wishlistIds.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+          />
+        </div>
+      </div>
+    );
+  };
+
   // Loading states
   if (loading) {
     return isMobile ? (
@@ -1527,16 +1879,6 @@ function ProductDetail() {
     );
   }
 
-  const getGeneratedDescription = (product) => {
-    if (product.description) return product.description;
-
-    const name = product.name || "This item";
-    const category = product.category || "product";
-    const keywords = product.keywords?.join(", ") || "";
-
-    return `${name} is a high-quality ${category} designed to meet your daily needs. Featuring ${keywords}, it's perfect for any occasion.`;
-  };
-
   // Get stock status - will be null when in stock
   const stockStatus = getStockStatus();
 
@@ -1546,574 +1888,279 @@ function ProductDetail() {
     return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
   };
 
-  // Updated Product Card Component for related products - matches Home.jsx design
-  const ProductCard = ({ product, showCoupon = false }) => {
-    const [activeSlide, setActiveSlide] = useState(0);
-    const [isInWishlist, setIsInWishlist] = useState(false);
-    const [cartQuantity, setCartQuantity] = useState(0);
-    
-    // Check if product is in wishlist
-    useEffect(() => {
-      setIsInWishlist(wishlistIds.includes(product.id));
-    }, [wishlistIds, product.id]);
-
-    // Check cart quantity in real-time
-    useEffect(() => {
-      const checkCartQuantity = async () => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        try {
-          const cartRef = doc(db, "carts", user.uid);
-          const cartSnap = await getDoc(cartRef);
-          if (cartSnap.exists()) {
-            const items = cartSnap.data().items || [];
-            const cartItem = items.find(item => item.id === product.id);
-            setCartQuantity(cartItem ? cartItem.quantity : 0);
-          } else {
-            setCartQuantity(0);
-          }
-        } catch (error) {
-          console.error("Error checking cart quantity:", error);
-        }
-      };
-
-      checkCartQuantity();
-    }, [product.id]);
-
-    // Calculate real discount percentage
-    const originalPrice = product.originalPrice || product.price * 1.5;
-    const currentPrice = product.price;
-    const realDiscountPercentage = originalPrice > currentPrice 
-      ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
-      : 0;
-
-    // Get real reviews data
-    const averageRating = product.averageRating || 0;
-    const reviewCount = product.reviewCount || 0;
-
-    // Get product images
-    const productImages = product.images && product.images.length > 0 
-      ? product.images 
-      : [product.displayImage || product.image || 'https://via.placeholder.com/300x300?text=No+Image'];
-
-    // Slide navigation
-    const handleSlideNavigation = (direction) => {
-      if (productImages.length <= 1) return;
-      
-      if (direction === 'next') {
-        setActiveSlide((prev) => (prev + 1) % productImages.length);
-      } else {
-        setActiveSlide((prev) => (prev - 1 + productImages.length) % productImages.length);
-      }
-    };
-
-    const handleDotClick = (index) => {
-      setActiveSlide(index);
-    };
-
-    // Auto-rotate slides
-    useEffect(() => {
-      if (productImages.length > 1) {
-        const interval = setInterval(() => {
-          setActiveSlide((prev) => (prev + 1) % productImages.length);
-        }, 4000);
-        
-        return () => clearInterval(interval);
-      }
-    }, [productImages.length]);
-
-    // Star rating helper
-    const renderStarRating = (rating) => {
-      const stars = [];
-      const fullStars = Math.floor(rating);
-      const hasHalfStar = rating % 1 >= 0.5;
-      
-      // Full stars
-      for (let i = 0; i < fullStars; i++) {
-        stars.push(<i key={`full-${i}`} className="fas fa-star"></i>);
-      }
-      
-      // Half star
-      if (hasHalfStar) {
-        stars.push(<i key="half" className="fas fa-star-half-alt"></i>);
-      }
-      
-      // Empty stars
-      const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-      for (let i = 0; i < emptyStars; i++) {
-        stars.push(<i key={`empty-${i}`} className="far fa-star"></i>);
-      }
-      
-      return stars;
-    };
-
-    const handleAddToCart = async (e) => {
-      e.stopPropagation();
-      
-      const user = auth.currentUser;
-      if (!user) {
-        showModal({
-          title: "Login Required",
-          message: "Please login to add items to cart",
-          type: "error"
-        });
-        navigate('/login');
-        return;
-      }
-
-      try {
-        const cartRef = doc(db, "carts", user.uid);
-        const cartSnap = await getDoc(cartRef);
-        
-        const productToAdd = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          category: product.category,
-          image: productImages[0],
-          quantity: 1,
-          addedAt: Date.now(),
-        };
-
-        if (cartSnap.exists()) {
-          const existingItems = cartSnap.data().items || [];
-          const alreadyExists = existingItems.find(item => item.id === product.id);
-          
-          if (alreadyExists) {
-            // If already in cart, increase quantity
-            const updatedItems = existingItems.map(item => 
-              item.id === product.id 
-                ? { ...item, quantity: (item.quantity || 1) + 1 }
-                : item
-            );
-            await setDoc(cartRef, { items: updatedItems });
-            setCartQuantity(prev => prev + 1);
-          } else {
-            // Add new item to cart
-            await updateDoc(cartRef, {
-              items: arrayUnion(productToAdd)
-            });
-            setCartQuantity(1);
-          }
-        } else {
-          await setDoc(cartRef, {
-            items: [productToAdd]
-          });
-          setCartQuantity(1);
-        }
-
-        showModal({
-          title: "Added to Cart",
-          message: `${product.name} has been added to your cart`,
-          type: "success"
-        });
-      } catch (error) {
-        console.error("Error adding to cart:", error);
-        showModal({
-          title: "Error",
-          message: "Failed to add item to cart",
-          type: "error"
-        });
-      }
-    };
-
-    const updateQuantity = async (newQty) => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      try {
-        const cartRef = doc(db, "carts", user.uid);
-        const cartSnap = await getDoc(cartRef);
-        
-        if (cartSnap.exists()) {
-          const items = cartSnap.data().items || [];
-          const updatedItems = items.map(item => 
-            item.id === product.id 
-              ? { ...item, quantity: newQty }
-              : item
-          ).filter(item => item.quantity > 0); // Remove if quantity is 0
-          
-          await setDoc(cartRef, { items: updatedItems });
-          setCartQuantity(newQty > 0 ? newQty : 0);
-        }
-      } catch (error) {
-        console.error("Error updating quantity:", error);
-      }
-    };
-
-    const toggleWishlist = async (e) => {
-      e.stopPropagation();
-      
-      const user = auth.currentUser;
-      if (!user) {
-        showModal({
-          title: "Login Required",
-          message: "Please login to manage wishlist",
-          type: "error"
-        });
-        navigate('/login');
-        return;
-      }
-
-      try {
-        const wishlistRef = doc(db, "wishlists", user.uid);
-        const wishlistSnap = await getDoc(wishlistRef);
-        let wishlistItems = wishlistSnap.exists() ? wishlistSnap.data().items || [] : [];
-
-        if (isInWishlist) {
-          wishlistItems = wishlistItems.filter(item => item.id !== product.id);
-          setIsInWishlist(false);
-        } else {
-          const wishlistItem = {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            category: product.category,
-            image: productImages[0],
-            addedAt: Date.now(),
-          };
-          wishlistItems.push(wishlistItem);
-          setIsInWishlist(true);
-        }
-
-        await setDoc(wishlistRef, { items: wishlistItems });
-      } catch (error) {
-        console.error("Error updating wishlist:", error);
-      }
-    };
-
-    const handleCardClick = () => {
-      navigate(`/product/${product.id}`);
-    };
-
-    return (
-      <div className="modern-product-card" onClick={handleCardClick}>
-        {/* Product Badge */}
-        {realDiscountPercentage > 0 && (
-          <div className="product-badge">{realDiscountPercentage}% OFF</div>
-        )}
-        
-        {/* Product Image Container with Slider */}
-        <div className="product-image-container">
-          <div className="image-slider">
-            {productImages.map((image, index) => (
-              <div
-                key={index}
-                className={`slide ${activeSlide === index ? 'active' : ''}`}
-              >
-                <img 
-                  src={image} 
-                  alt={`${product.name} - View ${index + 1}`}
-                  className="product-image"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-          
-          {/* Slider Navigation Dots */}
-          {productImages.length > 1 && (
-            <div className="slider-dots">
-              {productImages.map((_, index) => (
-                <button
-                  key={index}
-                  className={`dot ${activeSlide === index ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDotClick(index);
-                  }}
-                  aria-label={`View image ${index + 1}`}
-                ></button>
-              ))}
-            </div>
-          )}
-
-          {/* Slider Navigation Arrows */}
-          {productImages.length > 1 && (
-            <>
-              <button
-                className="slider-arrow prev-arrow"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSlideNavigation('prev');
-                }}
-                aria-label="Previous image"
-              >
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <button
-                className="slider-arrow next-arrow"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSlideNavigation('next');
-                }}
-                aria-label="Next image"
-              >
-                <i className="fas fa-chevron-right"></i>
-              </button>
-            </>
-          )}
-          
-          {/* Add to Cart / Quantity Controls */}
-          {cartQuantity === 0 ? (
-            <button
-              className="add-to-cart-plus"
-              onClick={handleAddToCart}
-              title="Add to Cart"
-            >
-              <i className="fas fa-plus"></i>
-            </button>
-          ) : (
-            <div className="quantity-controls-corner">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateQuantity(cartQuantity - 1);
-                }}
-                className="qty-btn-corner minus"
-              >
-                -
-              </button>
-              <span className="qty-display-corner">{cartQuantity}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateQuantity(cartQuantity + 1);
-                }}
-                className="qty-btn-corner plus"
-              >
-                +
-              </button>
-            </div>
-          )}
-
-          {/* Animated Wishlist Icon */}
-          <WishlistButton
-            isActive={isInWishlist}
-            size="small"
-            className="wishlist-btn-corner"
-            onClick={toggleWishlist}
-            title={isInWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
-          />
-        </div>
-
-        {/* Product Info */}
-        <div className="product-info-modern">
-          {/* Rating Section */}
-          <div className="product-rating">
-            <div className="stars">
-              {renderStarRating(averageRating)}
-            </div>
-            <span className="rating-value">{averageRating.toFixed(1)}</span>
-            <span className="review-count">({reviewCount})</span>
-          </div>
-
-          {/* Product Title */}
-          <h3 className="product-title-modern" title={product.name}>
-            {product.name}
-          </h3>
-
-          {/* Price Section */}
-          <div className="price-section">
-            <span className="current-price">₹{currentPrice.toFixed(2)}</span>
-            {realDiscountPercentage > 0 && (
-              <>
-                <span className="original-price">₹{originalPrice.toFixed(2)}</span>
-                <span className="discount">
-                  ({realDiscountPercentage}% OFF)
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Category Tag */}
-          <div className="category-tag">
-            {product.category || "Uncategorized"}
-          </div>
-
-          {/* Coupon Offer */}
-          {showCoupon && (
-            <div className="coupon-offer">
-              Get it for ₹{Math.round(currentPrice * 0.95)} with coupon
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   // Create the main product detail content
   const productDetailContent = (
-    <div className={`product-detail-container ${isMobile ? 'mobile-product-detail-container' : ''}`}>
-      <div className={`product-detail ${isMobile ? 'mobile-product-detail' : ''}`}>
-        
-        {/* Product Gallery Section */}
-<div className="product-gallery">
+    <ErrorBoundary>
+      <div className={`product-detail-container ${isMobile ? 'mobile-product-detail-container' : ''}`}>
+        <div className={`product-detail ${isMobile ? 'mobile-product-detail' : ''}`}>
+          
+          {/* Product Gallery Section */}
+          <div className="product-gallery">
 
-   {/* MAIN IMAGE */}
-  <div
-    className="main-image-box"
-    onClick={() => setIsFullscreen(true)}
-  >
-    <img
-      src={variantImages[selectedImage]}
-      className="main-product-image"
-      alt=""
-    />
-  </div>
+            {/* MAIN IMAGE */}
+            <div
+              className="main-image-box"
+              onClick={() => setIsFullscreen(true)}
+            >
+              <img
+                src={variantImages[selectedImage]}
+                className="main-product-image"
+                alt={product.name || "Product"}
+                onLoad={() => handleImageLoad('main', selectedImage)}
+                onError={() => handleImageError('main', selectedImage)}
+              />
+            </div>
 
-  {/* LEFT THUMBNAILS */}
-  <div className="thumbnail-list">
-    {variantImages.map((img, index) => (
-      <div
-        key={index}
-        className={`thumbnail-item ${selectedImage === index ? "active" : ""}`}
-        onClick={() => setSelectedImage(index)}
-      >
-        <img src={img} alt="" />
-      </div>
-    ))}
-  </div>
+            {/* LEFT THUMBNAILS */}
+            <div className="thumbnail-list">
+              {variantImages.map((img, index) => (
+                <div
+                  key={index}
+                  className={`thumbnail-item ${selectedImage === index ? "active" : ""}`}
+                  onClick={() => setSelectedImage(index)}
+                >
+                  <img 
+                    src={img} 
+                    alt={`${product.name} - view ${index + 1}`}
+                    onLoad={() => handleImageLoad('thumbnail', index)}
+                    onError={() => handleImageError('thumbnail', index)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
 
-  {/* FULLSCREEN VIEW */}
-  {isFullscreen && (
-    <div className="fullscreen-image-modal" onClick={() => setIsFullscreen(false)}>
-      <span className="fullscreen-close">×</span>
-      <img src={variantImages[selectedImage]} alt="" />
-    </div>
-  )}
+          {/* Fullscreen Modal */}
+          {isFullscreen && !isMobile && (
+            <div className="image-fullscreen" onClick={toggleFullscreen}>
+              <button className="fullscreen-close" onClick={toggleFullscreen}>
+                ×
+              </button>
+              
+              {variantImages.length > 1 && (
+                <>
+                  <button className="fullscreen-nav prev" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
+                    ‹
+                  </button>
+                  <button className="fullscreen-nav next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
+                    ›
+                  </button>
+                </>
+              )}
+              
+              <img 
+                src={variantImages[selectedImage] || getFallbackImage()} 
+                alt={product.name || "Product"}
+                className="fullscreen-image"
+                onClick={(e) => e.stopPropagation()}
+                style={{ maxWidth: '90%', maxHeight: '80vh', objectFit: 'contain' }}
+              />
+              
+              <div className="image-counter">
+                {selectedImage + 1} / {variantImages.length}
+              </div>
+            </div>
+          )}
 
-</div>
+          <div className={`product-info ${isMobile ? 'mobile-product-info' : ''}`}>
+            {/* Product Header Section */}
+            <div className="product-header">
+              <div className="product-title-section">
+                <h1>{product.name}</h1>
+                {!isMobile && (
+                  <div className="product-actions">
+                    {/* Animated Wishlist Button */}
+                    <WishlistButton
+                      isActive={wishlistIds.includes(product.id)}
+                      size="small"
+                      className="animated-wishlist-btn"
+                      onClick={handleToggleWishlist}
+                      title={wishlistIds.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                    />
+                    
+                    {/* Animated Share Button */}
+                    <ShareButton
+                      size="small"
+                      icon={true}
+                      onShare={handleShare}
+                      className="animated-share-btn"
+                      title="Share this product"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {/* Fullscreen Modal */}
-        {isFullscreen && !isMobile && (
-          <div className="image-fullscreen" onClick={toggleFullscreen}>
-            <button className="fullscreen-close" onClick={toggleFullscreen}>
-              ×
-            </button>
+            {/* Price Section */}
+            <div className="price-section">
+              <div className="price-main">
+                <span className="current-price">₹{formatPrice(currentPrice)}</span>
+                {product.originalPrice && product.originalPrice > currentPrice && (
+                  <div className="original-price-container">
+                    <span className="original-price">₹{formatPrice(product.originalPrice)}</span>
+                    <span className="discount-percent">{calculateDiscount()}% OFF</span>
+                  </div>
+                )}
+              </div>
+              <div className="tax-info">MRP incl. of all taxes</div>
+            </div>
             
-            {variantImages.length > 1 && (
-              <>
-                <button className="fullscreen-nav prev" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
-                  ‹
-                </button>
-                <button className="fullscreen-nav next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
-                  ›
-                </button>
-              </>
+            {/* Stock Status Display */}
+            {stockStatus && (
+              <div className={`stock-status ${stockStatus.status}`}>
+                <i className={`fas ${stockStatus.icon}`}></i>
+                {stockStatus.message}
+              </div>
             )}
             
-            <img 
-              src={variantImages[selectedImage] || getFallbackImage()} 
-              alt={product.name || "Product"}
-              className="fullscreen-image"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: '90%', maxHeight: '80vh', objectFit: 'contain' }}
-            />
-            
-            <div className="image-counter" style={{ position: 'fixed', bottom: '20px' }}>
-              {selectedImage + 1} / {variantImages.length}
-            </div>
-          </div>
-        )}
-
-        <div className={`product-info ${isMobile ? 'mobile-product-info' : ''}`}>
-          {/* Product Header Section */}
-          <div className="product-header">
-            <div className="product-title-section">
-              <h1>{product.name}</h1>
-              {!isMobile && (
-                <div className="product-actions">
-                  {/* Animated Wishlist Button */}
-                  <WishlistButton
-                    isActive={wishlistIds.includes(product.id)}
-                    size="small"
-                    className="animated-wishlist-btn"
-                    onClick={toggleWishlist}
-                    title={wishlistIds.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-                  />
-                  
-                  {/* Animated Share Button */}
-                  <ShareButton
-                    size="small"
-                    icon={true}
-                    onShare={handleShare}
-                    className="animated-share-btn"
-                    title="Share this product"
-                  />
-                </div>
-              )}
-            </div>
-            
-            <div className="product-rating">
-              <div className="stars">
-                {[...Array(5)].map((_, i) => (
-                  <i key={i} className={`fas fa-star ${i < 4 ? 'filled' : ''}`}></i>
-                ))}
+            {/* Variant Selectors */}
+            {product.variants && (
+              <div className="variant-selectors">
+                {/* Color Selector */}
+                {product.variants.colors && renderColorSelector(product.variants.colors, "Color")}
+                
+                {/* Storage Selector */}
+                {product.variants.storage && renderVariantSelector("storage", product.variants.storage, "Storage")}
+                
+                {/* RAM Selector */}
+                {product.variants.ram && renderVariantSelector("ram", product.variants.ram, "RAM")}
               </div>
-              <span className="review-count">(112 reviews)</span>
-            </div>
-          </div>
+            )}
 
-          {/* Price Section */}
-          <div className="price-section">
-            <div className="price-main">
-              <span className="current-price">₹{formatPrice(currentPrice)}</span>
-              {product.originalPrice && product.originalPrice > currentPrice && (
-                <div className="original-price-container">
-                  <span className="original-price">₹{formatPrice(product.originalPrice)}</span>
-                  <span className="discount-percent">{calculateDiscount()}% OFF</span>
+            {/* Legacy Size Selector for Clothing */}
+            {product.sizes && renderSizeSelector(product.sizes, "Size")}
+
+           
+
+            {/* Enhanced Delivery Section */}
+            <div className="delivery-section">
+              <div className="delivery-header">
+                <i className="fas fa-truck"></i>
+                <h3>Delivery</h3>
+              </div>
+              
+              {!deliveryInfo ? (
+                <div className="delivery-default">
+                  <p className="delivery-estimate">{getDefaultDeliveryEstimate()}</p>
+                </div>
+              ) : deliveryInfo.serviceable ? (
+                <div className="delivery-success">
+                  <div className="delivery-info">
+                    <i className="fas fa-check-circle"></i>
+                    <div>
+                      <p className="delivery-date">{deliveryInfo.message}</p>
+                      {deliveryInfo.isExpress && (
+                        <p className="express-delivery">
+                          <i className="fas fa-bolt"></i>
+                          Express delivery available
+                        </p>
+                      )}
+                      <p className="delivery-days">Order within next 4 hours</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="delivery-error">
+                  <i className="fas fa-exclamation-circle"></i>
+                  <p>{deliveryInfo.message}</p>
+                </div>
+              )}
+
+              <div className="delivery-features">
+                <div className="delivery-feature">
+                  <i className="fas fa-sync-alt"></i>
+                  <span>Free & easy returns</span>
+                </div>
+                <div className="delivery-feature">
+                  <i className="fas fa-shield-alt"></i>
+                  <span>100% secure delivery</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="features-grid">
+              <div className="feature-item">
+                <i className="fas fa-sync-alt"></i>
+                <span>Easy 30 Days Return</span>
+              </div>
+              <div className="feature-item">
+                <i className="fas fa-truck"></i>
+                <span>Free Shipping</span>
+              </div>
+              <div className="feature-item">
+                <i className="fas fa-gift"></i>
+                <span>Gift Wrap available for ₹50</span>
+              </div>
+            </div>
+
+            <div className="offers-section">
+              <h3 className="offers-title">Offers For You</h3>
+
+              {couponLoading ? (
+                <div className="coupon-loader">Loading offers...</div>
+              ) : coupons.length === 0 ? (
+                <div className="no-offers">No offers available right now</div>
+              ) : (
+                <div className="coupon-list">
+                  {coupons.map(c => (
+                    <div className="coupon-card" key={c.id}>
+                      
+                      <div className="coupon-left">
+                        <div className="coupon-code">{c.code}</div>
+                        <p className="coupon-desc">{c.description}</p>
+
+                        <div className="coupon-tags">
+                          {c.firstOrderOnly && <span className="tag first-order">First Order</span>}
+                          {c.type === "percentage" && <span className="tag percent">{c.value}% Off</span>}
+                          {c.type === "flat" && <span className="tag flat">₹{c.value} Off</span>}
+                        </div>
+                      </div>
+
+                      <div className="coupon-right">
+                        <CopyButton 
+                          text={c.code}
+                          size="small"
+                          className="copy-coupon-btn"
+                          onCopy={(result) => {
+                            if (result.success) {
+                              showModal({
+                                title: "Coupon Copied!",
+                                message: `Coupon code "${c.code}" copied to clipboard`,
+                                type: "success"
+                              });
+                            }
+                          }}
+                        >
+                          Copy Code
+                        </CopyButton>
+                        <span className="expiry">
+                          Expires: {new Date(c.expiryDate).toLocaleDateString("en-IN")}
+                        </span>
+                      </div>
+
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            <div className="tax-info">MRP incl. of all taxes</div>
-          </div>
-          
-          
-          
-          {/* Stock Status Display */}
-          {stockStatus && (
-            <div className={`stock-status ${stockStatus.status}`}>
-              <i className={`fas ${stockStatus.icon}`}></i>
-              {stockStatus.message}
-            </div>
-          )}
-          
-          {/* Variant Selectors */}
-          {product.variants && (
-            <div className="variant-selectors">
-              {/* Color Selector */}
-              {product.variants.colors && renderColorSelector(product.variants.colors, "Color")}
-              
-              {/* Storage Selector */}
-              {product.variants.storage && renderVariantSelector("storage", product.variants.storage, "Storage")}
-              
-              {/* RAM Selector */}
-              {product.variants.ram && renderVariantSelector("ram", product.variants.ram, "RAM")}
-            </div>
-          )}
 
-          {/* Legacy Size Selector for Clothing */}
-          {product.sizes && renderSizeSelector(product.sizes, "Size")}
+            {/* Mobile Sticky Action Buttons - Only on mobile */}
+            {isMobile && <MobileStickyActions />}
 
-          {/* Mobile Action Buttons - Show at top on mobile */}
-          {isMobile && (
-            <div className="mobile-action-buttons-sticky">
-              <div className="action-buttons mobile-sticky-actions">
+            {/* Desktop Action Buttons - Only on desktop */}
+            {!isMobile && (
+              <div className="action-buttons desktop-action-buttons">
                 {isProductInCart ? (
                   <div className="quantity-controls">
-                    <button
+                    <button 
                       onClick={() => updateCartQuantity(quantity - 1)}
                       disabled={!isVariantInStock()}
                       title="Decrease quantity"
                     >
                       -
                     </button>
-                    <span>{quantity} in cart</span>
-                    <button
+                    <span>{quantity} in Cart</span>
+                    <button 
                       onClick={() => updateCartQuantity(quantity + 1)}
                       disabled={!isVariantInStock()}
                       title="Increase quantity"
@@ -2124,7 +2171,7 @@ function ProductDetail() {
                 ) : (
                   <button
                     className="add-to-cart"
-                    onClick={addToCart}
+                    onClick={handleAddToCart}
                     disabled={!isVariantInStock()}
                     title={!isVariantInStock() ? "This variant is out of stock" : "Add to cart"}
                   >
@@ -2135,7 +2182,7 @@ function ProductDetail() {
 
                 <button 
                   className="buy-now" 
-                  onClick={buyNow}
+                  onClick={handleBuyNow}
                   disabled={!isVariantInStock()}
                   title={!isVariantInStock() ? "This variant is out of stock" : "Buy now"}
                 >
@@ -2143,281 +2190,151 @@ function ProductDetail() {
                   {!isVariantInStock() ? 'Unavailable' : 'Buy Now'}
                 </button>
 
-                {/* Mobile Animated Wishlist Button */}
+                {/* Desktop Animated Wishlist Button */}
                 <WishlistButton
                   isActive={wishlistIds.includes(product.id)}
-                  size="small"
-                  className="mobile-wishlist-btn"
-                  onClick={toggleWishlist}
+                  size="medium"
+                  className="desktop-wishlist-btn"
+                  onClick={handleToggleWishlist}
                 >
                   {wishlistIds.includes(product.id) ? 'Saved' : 'Save'}
                 </WishlistButton>
-
-                {/* Mobile Share Button */}
-                <ShareButton
-                  size="small"
-                  icon={true}
-                  onShare={handleShare}
-                  className="mobile-share-btn"
-                  title="Share this product"
-                >
-                  Share
-                </ShareButton>
-              </div>
-            </div>
-          )}
-
-          {/* Enhanced Delivery Section */}
-          <div className="delivery-section">
-            <div className="delivery-header">
-              <i className="fas fa-truck"></i>
-              <h3>Delivery Options</h3>
-            </div>
-            
-            {!deliveryInfo ? (
-              <div className="delivery-default">
-                <p className="delivery-estimate">{getDefaultDeliveryEstimate()}</p>
-                <p className="delivery-note">Enter your pincode for exact delivery date</p>
-              </div>
-            ) : deliveryInfo.serviceable ? (
-              <div className="delivery-success">
-                <div className="delivery-info">
-                  <i className="fas fa-check-circle"></i>
-                  <div>
-                    <p className="delivery-date">{deliveryInfo.message}</p>
-                    {deliveryInfo.isExpress && (
-                      <p className="express-delivery">
-                        <i className="fas fa-bolt"></i>
-                        Express delivery available
-                      </p>
-                    )}
-                    <p className="delivery-days">Order within next 4 hours</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="delivery-error">
-                <i className="fas fa-exclamation-circle"></i>
-                <p>{deliveryInfo.message}</p>
               </div>
             )}
 
-            <div className="pincode-checker">
-              <div className="pincode-input-group">
-                <input 
-                  type="text" 
-                  placeholder="Enter 6-digit pincode" 
-                  maxLength="6"
-                  value={pincode}
-                  onChange={handlePincodeChange}
-                  className={`pincode-input ${pincodeError ? 'error' : ''}`}
-                />
-                <button 
-                  className={`check-btn ${isCheckingPincode ? 'loading' : ''}`}
-                  onClick={handleCheckPincode}
-                  disabled={isCheckingPincode || pincode.length !== 6}
-                >
-                  {isCheckingPincode ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin"></i>
-                      Checking...
-                    </>
-                  ) : (
-                    'Check'
-                  )}
-                </button>
-              </div>
-              {pincodeError && (
-                <p className="pincode-error">{pincodeError}</p>
-              )}
-            </div>
+            {/* PRODUCT DESCRIPTION */}
+            <div className="product-description-section">
+              <h3 className="section-title">Product Description</h3>
+              <p className="product-description-text">
+                {finalDescription}
+              </p>
 
-            <div className="delivery-features">
-              <div className="delivery-feature">
-                <i className="fas fa-sync-alt"></i>
-                <span>Free & easy returns</span>
-              </div>
-              <div className="delivery-feature">
-                <i className="fas fa-shield-alt"></i>
-                <span>100% secure delivery</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="features-grid">
-            <div className="feature-item">
-              <i className="fas fa-sync-alt"></i>
-              <span>Easy 30 Days Return</span>
-            </div>
-            <div className="feature-item">
-              <i className="fas fa-truck"></i>
-              <span>Free Shipping</span>
-            </div>
-            <div className="feature-item">
-              <i className="fas fa-gift"></i>
-              <span>Gift Wrap available for ₹50</span>
-            </div>
-          </div>
-
-          <div className="offers-section">
-            <h3>Offers For You</h3>
-            <div className="offer-item">
-              <input type="checkbox" id="offer1" />
-              <label htmlFor="offer1">FLAT ₹150 OFF on Silver Jewellery above ₹2499</label>
-            </div>
-            <div className="offer-item">
-              <input type="checkbox" id="offer2" />
-              <label htmlFor="offer2">FLAT 5% OFF on Silver Jewellery above ₹1499</label>
-            </div>
-            <button className="view-more-offers">View more offers</button>
-          </div>
-
-          {/* Desktop Action Buttons */}
-          {!isMobile && (
-            <div className="action-buttons">
-              {isProductInCart ? (
-                <div className="quantity-controls">
-                  <button 
-                    onClick={() => updateCartQuantity(quantity - 1)}
-                    disabled={!isVariantInStock()}
-                    title="Decrease quantity"
-                  >
-                    -
-                  </button>
-                  <span>{quantity} in Cart</span>
-                  <button 
-                    onClick={() => updateCartQuantity(quantity + 1)}
-                    disabled={!isVariantInStock()}
-                    title="Increase quantity"
-                  >
-                    +
-                  </button>
+              {/* SPECIFICATIONS */}
+              {product.specifications && (
+                <div className="specifications-section">
+                  <h3 className="section-title">Specifications</h3>
+                  <div className="spec-table">
+                    {/* ARRAY TYPE */}
+                    {Array.isArray(product.specifications) &&
+                      product.specifications.map((item, index) => (
+                        <div className="spec-row" key={index}>
+                          <div className="spec-left">
+                            <i className={getSpecIcon(item.key)}></i>
+                            <span className="spec-key">{item.key}</span>
+                          </div>
+                          <span className="spec-value">{item.value}</span>
+                        </div>
+                      ))}
+                    
+                    {/* OBJECT TYPE */}
+                    {!Array.isArray(product.specifications) &&
+                      Object.entries(product.specifications).map(([key, value], index) => (
+                        <div className="spec-row" key={index}>
+                          <div className="spec-left">
+                            <i className={getSpecIcon(key)}></i>
+                            <span className="spec-key">{key}</span>
+                          </div>
+                          <span className="spec-value">{value}</span>
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              ) : (
-                <button
-                  className="add-to-cart"
-                  onClick={addToCart}
-                  disabled={!isVariantInStock()}
-                  title={!isVariantInStock() ? "This variant is out of stock" : "Add to cart"}
-                >
-                  <i className="fas fa-shopping-cart"></i> 
-                  {!isVariantInStock() ? 'Out of Stock' : 'Add to Cart'}
-                </button>
               )}
-
-              <button 
-                className="buy-now" 
-                onClick={buyNow}
-                disabled={!isVariantInStock()}
-                title={!isVariantInStock() ? "This variant is out of stock" : "Buy now"}
-              >
-                <i className="fas fa-bolt"></i> 
-                {!isVariantInStock() ? 'Unavailable' : 'Buy Now'}
-              </button>
-
-              {/* Desktop Animated Wishlist Button */}
-              <WishlistButton
-                isActive={wishlistIds.includes(product.id)}
-                size="medium"
-                className="desktop-wishlist-btn"
-                onClick={toggleWishlist}
-              >
-                {wishlistIds.includes(product.id) ? 'Saved' : 'Save'}
-              </WishlistButton>
             </div>
-          )}
+          </div>
+        </div>
 
-          <div className="product-description">
-            <h3>Product Description</h3>
-            <p><strong>The inspiration:</strong></p>
-            <p>Inspired from the classy way you carry yourself, this minimalistic beauty is a must-have. The Design combines elegance with modern aesthetics to create a piece that complements your style perfectly.</p>
-            <button className="show-more-btn">Show More</button>
+        {/* Related Products Sections - UPDATED: Using Global ProductCard */}
+        <div className="related-products-sections">
+          {/* Recently Viewed */}
+          <div className="related-products-section">
+            <h3>Recently Viewed</h3>
+            {relatedProductsLoading ? (
+              <div className="related-products-loading">Loading recently viewed...</div>
+            ) : recentlyViewed.length > 0 ? (
+              <div className="products-grid">
+                {recentlyViewed.map(product => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product}
+                    onCartUpdate={fetchCartCount}
+                    wishlistIds={wishlistIds}
+                    toggleWishlist={toggleWishlist}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="related-products-empty">No recently viewed items</div>
+            )}
+          </div>
+
+          {/* You May Also Like */}
+          <div className="related-products-section">
+            <h3>You May Also Like</h3>
+            {relatedProductsLoading ? (
+              <div className="related-products-loading">Loading recommendations...</div>
+            ) : youMayAlsoLike.length > 0 ? (
+              <div className="products-grid">
+                {youMayAlsoLike.map(product => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product}
+                    onCartUpdate={fetchCartCount}
+                    wishlistIds={wishlistIds}
+                    toggleWishlist={toggleWishlist}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="related-products-empty">No recommendations available</div>
+            )}
+          </div>
+
+          {/* Similar Products */}
+          <div className="related-products-section">
+            <h3>Similar Products</h3>
+            {relatedProductsLoading ? (
+              <div className="related-products-loading">Loading similar products...</div>
+            ) : similarProducts.length > 0 ? (
+              <div className="products-grid">
+                {similarProducts.map(product => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product}
+                    onCartUpdate={fetchCartCount}
+                    wishlistIds={wishlistIds}
+                    toggleWishlist={toggleWishlist}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="related-products-empty">No similar products found</div>
+            )}
+          </div>
+        </div>
+
+        {/* Additional Sections */}
+        <div className="additional-sections">
+          <div className="shipping-details">
+            <h3>Shipping & Returns</h3>
+            <ul>
+              <li>Free express shipping on orders above ₹999</li>
+              <li>No questions asked 30 days return policy</li>
+              <li>Cash on delivery available</li>
+              <li>100% quality guarantee</li>
+              <li>Secure packaging</li>
+              <li>Track your order in real-time</li>
+            </ul>
+            <button className="show-more-btn">View Shipping Policy</button>
+          </div>
+
+          <div className="reviews-section">
+            <h2>Customer Reviews</h2>
+            <ReviewBlock productId={id} />
           </div>
         </div>
       </div>
-
-      {/* Related Products Sections */}
-      <div className="related-products-sections">
-        {/* Recently Viewed */}
-        <div className="related-products-section">
-          <h3>Recently Viewed</h3>
-          {relatedProductsLoading ? (
-            <div className="related-products-loading">Loading recently viewed...</div>
-          ) : recentlyViewed.length > 0 ? (
-            <div className="products-grid">
-              {recentlyViewed.map(product => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product}
-                  showCoupon={true}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="related-products-empty">No recently viewed items</div>
-          )}
-        </div>
-
-        {/* You May Also Like */}
-        <div className="related-products-section">
-          <h3>You May Also Like</h3>
-          {relatedProductsLoading ? (
-            <div className="related-products-loading">Loading recommendations...</div>
-          ) : youMayAlsoLike.length > 0 ? (
-            <div className="products-grid">
-              {youMayAlsoLike.map(product => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="related-products-empty">No recommendations available</div>
-          )}
-        </div>
-
-        {/* Similar Products */}
-        <div className="related-products-section">
-          <h3>Similar Products</h3>
-          {relatedProductsLoading ? (
-            <div className="related-products-loading">Loading similar products...</div>
-          ) : similarProducts.length > 0 ? (
-            <div className="products-grid">
-              {similarProducts.map(product => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="related-products-empty">No similar products found</div>
-          )}
-        </div>
-      </div>
-
-      {/* Additional Sections */}
-      <div className="additional-sections">
-        <div className="shipping-details">
-          <h3>Shipping & Returns</h3>
-          <ul>
-            <li>Free express shipping on orders above ₹999</li>
-            <li>No questions asked 30 days return policy</li>
-            <li>Cash on delivery available</li>
-            <li>100% quality guarantee</li>
-            <li>Secure packaging</li>
-            <li>Track your order in real-time</li>
-          </ul>
-          <button className="show-more-btn">View Shipping Policy</button>
-        </div>
-
-        <div className="reviews-section">
-          <h2>Customer Reviews</h2>
-          <ReviewBlock productId={id} />
-        </div>
-      </div>
-    </div>
+    </ErrorBoundary>
   );
 
   // Return the appropriate layout based on device
@@ -2436,43 +2353,204 @@ function ProductDetail() {
   );
 }
 
-// Complete ReviewBlock component with proper implementation
+// Complete Professional ReviewBlock Component with Premium Features
 function ReviewBlock({ productId }) {
   const [reviews, setReviews] = useState([]);
   const [visibleCount, setVisibleCount] = useState(3);
   const [rating, setRating] = useState(0);
-  const [text, setText] = useState('');
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [title, setTitle] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [filterRating, setFilterRating] = useState(0);
+  const [showMediaOnly, setShowMediaOnly] = useState(false);
+  const [userVotes, setUserVotes] = useState({});
+  
   const user = auth.currentUser;
   const { showModal } = useGlobalModal();
+  const navigate = useNavigate(); // Added navigate
+  const fileInputRef = useRef(null); // Added useRef
 
+  // Stats for review summary
+  const reviewStats = {
+    total: reviews.length,
+    average: reviews.length ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length) : 0,
+    distribution: {
+      5: reviews.filter(r => r.rating === 5).length,
+      4: reviews.filter(r => r.rating === 4).length,
+      3: reviews.filter(r => r.rating === 3).length,
+      2: reviews.filter(r => r.rating === 2).length,
+      1: reviews.filter(r => r.rating === 1).length,
+    }
+  };
+
+  // Fetch reviews with real-time updates
   useEffect(() => {
     if (!productId) return;
     
-    const q = query(
-      collection(db, "products", productId, "reviews"), 
-      orderBy("timestamp", "desc")
-    );
+    let q;
+    if (sortBy === 'helpful') {
+      q = query(
+        collection(db, "products", productId, "reviews"), 
+        orderBy("helpfulCount", "desc"),
+        orderBy("timestamp", "desc")
+      );
+    } else if (sortBy === 'highest') {
+      q = query(
+        collection(db, "products", productId, "reviews"), 
+        orderBy("rating", "desc"),
+        orderBy("timestamp", "desc")
+      );
+    } else if (sortBy === 'lowest') {
+      q = query(
+        collection(db, "products", productId, "reviews"), 
+        orderBy("rating", "asc"),
+        orderBy("timestamp", "desc")
+      );
+    } else {
+      // newest first
+      q = query(
+        collection(db, "products", productId, "reviews"), 
+        orderBy("timestamp", "desc")
+      );
+    }
     
     const unsub = onSnapshot(q, (snapshot) => {
       const reviewList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      setReviews(reviewList);
+      
+      // Apply rating filter if set
+      let filteredReviews = reviewList;
+      if (filterRating > 0) {
+        filteredReviews = reviewList.filter(r => r.rating === filterRating);
+      }
+      
+      // Apply media filter if set
+      if (showMediaOnly) {
+        filteredReviews = filteredReviews.filter(r => 
+          (r.media && r.media.length > 0) || 
+          (r.videos && r.videos.length > 0)
+        );
+      }
+      
+      setReviews(filteredReviews);
     }, (error) => {
       console.error("Error fetching reviews:", error);
     });
 
     return () => unsub();
-  }, [productId]);
+  }, [productId, sortBy, filterRating, showMediaOnly]);
 
-  const avgRating = reviews.length
-    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length)
-    : 0;
+  // Load user votes from localStorage
+  useEffect(() => {
+    if (user) {
+      const savedVotes = localStorage.getItem(`reviewVotes_${user.uid}`);
+      if (savedVotes) {
+        setUserVotes(JSON.parse(savedVotes));
+      }
+    }
+  }, [user]);
 
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = files.slice(0, 5 - selectedFiles.length); // Max 5 files
+    
+    validFiles.forEach(file => {
+      // Validate file types
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+      
+      if (!validImageTypes.includes(file.type) && !validVideoTypes.includes(file.type)) {
+        showModal({
+          title: "Invalid File Type",
+          message: "Please upload only images (JPEG, PNG, GIF, WebP) or videos (MP4, WebM, OGG)",
+          type: "error"
+        });
+        return;
+      }
+      
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showModal({
+          title: "File Too Large",
+          message: "Each file must be less than 10MB",
+          type: "error"
+        });
+        return;
+      }
+    });
+    
+    setSelectedFiles(prev => [...prev, ...validFiles]);
+  };
+
+  // Remove selected file
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Upload files to Firebase Storage
+  const uploadFiles = async () => {
+    if (!selectedFiles.length) return { images: [], videos: [] };
+    
+    // Check if storage is available
+    if (!storage) {
+      console.error('Firebase Storage not available');
+      showModal({
+        title: "Upload Error",
+        message: "File upload is not available at the moment.",
+        type: "error"
+      });
+      return { images: [], videos: [] };
+    }
+    
+    setUploading(true);
+    const uploadedImages = [];
+    const uploadedVideos = [];
+    
+    try {
+      for (const file of selectedFiles) {
+        const timestamp = Date.now();
+        const fileName = `${user.uid}_${timestamp}_${file.name.replace(/\s+/g, '_')}`;
+        const storageRef = ref(storage, `reviews/${productId}/${fileName}`);
+        
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        
+        if (file.type.startsWith('image/')) {
+          uploadedImages.push({
+            url: downloadURL,
+            thumbnail: downloadURL,
+            type: 'image'
+          });
+        } else if (file.type.startsWith('video/')) {
+          uploadedVideos.push({
+            url: downloadURL,
+            thumbnail: null, // You could generate thumbnails here
+            type: 'video'
+          });
+        }
+      }
+      
+      setUploading(false);
+      return { images: uploadedImages, videos: uploadedVideos };
+      
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      setUploading(false);
+      throw error;
+    }
+  };
+
+  // Submit review
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!user) {
       showModal({
         title: "Login Required",
@@ -2490,24 +2568,68 @@ function ReviewBlock({ productId }) {
       });
       return;
     }
+    
+    if (!reviewText.trim() || reviewText.trim().length < 10) {
+      showModal({
+        title: "Review Too Short",
+        message: "Please write a detailed review (minimum 10 characters)",
+        type: "error"
+      });
+      return;
+    }
 
     setSubmitting(true);
+    
     try {
-      await addDoc(collection(db, "products", productId, "reviews"), {
+      let media = { images: [], videos: [] };
+      
+      // Upload files if any
+      if (selectedFiles.length > 0) {
+        media = await uploadFiles();
+      }
+      
+      // Create review data
+      const reviewData = {
         userId: user.uid,
-        name: user.displayName || "Verified Buyer",
+        userName: user.displayName || "Verified Buyer",
+        userAvatar: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=random`,
         rating,
-        text,
+        title: title.trim() || null,
+        text: reviewText.trim(),
+        media: media.images,
+        videos: media.videos,
         timestamp: serverTimestamp(),
-        date: new Date().toLocaleDateString()
-      });
-      setText('');
+        date: new Date().toLocaleDateString('en-IN', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        helpfulCount: 0,
+        verifiedPurchase: true, // You can implement actual verification logic
+        featured: Math.random() < 0.1, // Randomly feature 10% of reviews
+        reactions: {
+          helpful: 0,
+          funny: 0,
+          love: 0
+        }
+      };
+      
+      // Add review to Firestore
+      await addDoc(collection(db, "products", productId, "reviews"), reviewData);
+      
+      // Clear form
+      setReviewText('');
+      setTitle('');
       setRating(0);
+      setSelectedFiles([]);
+      
+      // Show success message
       showModal({
-        title: "Review Submitted",
-        message: "Thank you for your review!",
+        title: "Review Submitted!",
+        message: "Thank you for sharing your experience. Your review helps other customers.",
         type: "success"
       });
+      
     } catch (err) {
       console.error("Submit review error:", err);
       showModal({
@@ -2516,11 +2638,140 @@ function ReviewBlock({ productId }) {
         type: "error"
       });
     }
+    
     setSubmitting(false);
+    setUploading(false);
   };
 
+  // Handle helpful vote
+  const handleVoteHelpful = async (reviewId, currentCount) => {
+    if (!user) {
+      showModal({
+        title: "Login Required",
+        message: "Please login to vote on reviews",
+        type: "error"
+      });
+      return;
+    }
+    
+    const voteKey = `${productId}_${reviewId}`;
+    const hasVoted = userVotes[voteKey]?.helpful || false;
+    
+    try {
+      const reviewRef = doc(db, "products", productId, "reviews", reviewId);
+      
+      if (hasVoted) {
+        // Remove vote
+        await updateDoc(reviewRef, {
+          helpfulCount: Math.max(0, currentCount - 1)
+        });
+        
+        const newVotes = { ...userVotes };
+        delete newVotes[voteKey];
+        setUserVotes(newVotes);
+        localStorage.setItem(`reviewVotes_${user.uid}`, JSON.stringify(newVotes));
+        
+      } else {
+        // Add vote
+        await updateDoc(reviewRef, {
+          helpfulCount: currentCount + 1
+        });
+        
+        const newVotes = {
+          ...userVotes,
+          [voteKey]: { helpful: true }
+        };
+        setUserVotes(newVotes);
+        localStorage.setItem(`reviewVotes_${user.uid}`, JSON.stringify(newVotes));
+      }
+      
+    } catch (error) {
+      console.error("Error updating vote:", error);
+    }
+  };
+
+  // Handle reaction
+  const handleReaction = async (reviewId, reactionType) => {
+    if (!user) {
+      showModal({
+        title: "Login Required",
+        message: "Please login to react to reviews",
+        type: "error"
+      });
+      return;
+    }
+    
+    const voteKey = `${productId}_${reviewId}_${reactionType}`;
+    const hasReacted = userVotes[voteKey] || false;
+    
+    try {
+      const reviewRef = doc(db, "products", productId, "reviews", reviewId);
+      const reviewDoc = await getDoc(reviewRef);
+      
+      if (reviewDoc.exists()) {
+        const currentReactions = reviewDoc.data().reactions || { helpful: 0, funny: 0, love: 0 };
+        
+        if (hasReacted) {
+          // Remove reaction
+          await updateDoc(reviewRef, {
+            [`reactions.${reactionType}`]: Math.max(0, currentReactions[reactionType] - 1)
+          });
+          
+          const newVotes = { ...userVotes };
+          delete newVotes[voteKey];
+          setUserVotes(newVotes);
+          
+        } else {
+          // Add reaction
+          await updateDoc(reviewRef, {
+            [`reactions.${reactionType}`]: currentReactions[reactionType] + 1
+          });
+          
+          const newVotes = {
+            ...userVotes,
+            [voteKey]: true
+          };
+          setUserVotes(newVotes);
+        }
+        
+        localStorage.setItem(`reviewVotes_${user.uid}`, JSON.stringify(userVotes));
+      }
+      
+    } catch (error) {
+      console.error("Error updating reaction:", error);
+    }
+  };
+
+  // Report review
+  const handleReport = async (reviewId) => {
+    const reason = prompt("Please specify the reason for reporting this review:", "Inappropriate content");
+    
+    if (reason && user) {
+      try {
+        await addDoc(collection(db, "reportedReviews"), {
+          productId,
+          reviewId,
+          userId: user.uid,
+          reason,
+          timestamp: serverTimestamp()
+        });
+        
+        showModal({
+          title: "Review Reported",
+          message: "Thank you for your report. Our team will review it shortly.",
+          type: "success"
+        });
+        
+      } catch (error) {
+        console.error("Error reporting review:", error);
+      }
+    }
+  };
+
+  // Delete review
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
+    
     try {
       await deleteDoc(doc(db, "products", productId, "reviews", id));
       showModal({
@@ -2538,18 +2789,23 @@ function ReviewBlock({ productId }) {
     }
   };
 
-  const handleEdit = async (id, oldText, oldRating) => {
+  // Edit review
+  const handleEdit = async (id, oldTitle, oldText, oldRating) => {
+    const newTitle = prompt("Edit review title:", oldTitle || "");
+    if (newTitle === null) return;
+    
     const newText = prompt("Edit your review:", oldText);
-    if (newText === null) return; // User cancelled
+    if (newText === null) return;
     
     const newRatingInput = prompt("Edit your rating (1-5):", oldRating);
-    if (newRatingInput === null) return; // User cancelled
+    if (newRatingInput === null) return;
     
     const newRating = Number(newRatingInput);
-    if (!newText || !newRating || newRating < 1 || newRating > 5) {
+    
+    if (!newText || newText.trim().length < 10 || !newRating || newRating < 1 || newRating > 5) {
       showModal({
         title: "Invalid Input",
-        message: "Please provide valid text and rating (1-5)",
+        message: "Please provide valid text (minimum 10 characters) and rating (1-5)",
         type: "error"
       });
       return;
@@ -2557,15 +2813,23 @@ function ReviewBlock({ productId }) {
 
     try {
       await updateDoc(doc(db, "products", productId, "reviews", id), {
-        text: newText,
+        title: newTitle.trim() || null,
+        text: newText.trim(),
         rating: newRating,
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        date: new Date().toLocaleDateString('en-IN', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })
       });
+      
       showModal({
         title: "Review Updated",
-        message: "Your review has been updated",
+        message: "Your review has been updated successfully",
         type: "success"
       });
+      
     } catch (err) {
       console.error("Edit error:", err);
       showModal({
@@ -2576,111 +2840,464 @@ function ReviewBlock({ productId }) {
     }
   };
 
-  const loadMore = () => setVisibleCount(prev => prev + 3);
+  // Load more reviews
+  const loadMore = () => setVisibleCount(prev => prev + 6);
+
+  // Calculate percentage for rating bar
+  const calculatePercentage = (count) => {
+    return reviewStats.total > 0 ? (count / reviewStats.total) * 100 : 0;
+  };
 
   return (
-    <div className="review-block">
-      <div className="average-rating">
-        <strong>{avgRating.toFixed(1)}</strong> out of 5
-        <div className="stars">
-          {[...Array(5)].map((_, i) => (
-            <i 
-              key={i} 
-              className={`fas fa-star ${i < Math.round(avgRating) ? 'filled' : ''}`}
-            ></i>
-          ))}
-        </div>
-        <p>{reviews.length} review(s)</p>
-      </div>
-
-      {user && (
-        <form onSubmit={handleSubmit} className="review-form">
-          <h4>Write a Review</h4>
-          <label>Rating:</label>
-          <div className="stars-input">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span
-                key={star}
-                style={{
-                  cursor: "pointer",
-                  fontSize: "24px",
-                  color: star <= rating ? "#FF4081" : "#ccc",
-                  transition: "color 0.2s"
-                }}
-                onClick={() => setRating(star)}
-              >
-                ★
-              </span>
+    <div className="premium-review-section">
+      {/* Review Summary Header */}
+      <div className="review-header">
+        <div className="review-summary">
+          <div className="average-rating-box">
+            <div className="average-number">{reviewStats.average.toFixed(1)}</div>
+            <div className="stars-large">
+              {[...Array(5)].map((_, i) => (
+                <i 
+                  key={i} 
+                  className={`fas fa-star ${i < Math.floor(reviewStats.average) ? 'filled' : ''} ${i === Math.floor(reviewStats.average) && reviewStats.average % 1 >= 0.5 ? 'half' : ''}`}
+                ></i>
+              ))}
+            </div>
+            <div className="review-count">{reviewStats.total} verified reviews</div>
+          </div>
+          
+          <div className="rating-distribution">
+            {[5, 4, 3, 2, 1].map((star) => (
+              <div key={star} className="distribution-row" onClick={() => setFilterRating(filterRating === star ? 0 : star)}>
+                <span className="star-label">{star} star{star !== 1 ? 's' : ''}</span>
+                <div className="distribution-bar">
+                  <div 
+                    className="distribution-fill" 
+                    style={{ width: `${calculatePercentage(reviewStats.distribution[star])}%` }}
+                  ></div>
+                </div>
+                <span className="distribution-count">{reviewStats.distribution[star]}</span>
+              </div>
             ))}
           </div>
-
-          <label>Your Review:</label>
-          <textarea 
-            value={text} 
-            onChange={(e) => setText(e.target.value)} 
-            required 
-            placeholder="Share your experience with this product..."
-            rows="4"
-          />
-          <button type="submit" disabled={submitting || !rating}>
-            {submitting ? "Submitting..." : "Submit Review"}
+        </div>
+        
+        <div className="review-actions">
+          <button 
+            className="write-review-btn"
+            onClick={() => document.getElementById('reviewForm')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <i className="fas fa-pen"></i> Write a Review
           </button>
-        </form>
-      )}
+        </div>
+      </div>
 
-      <div className="reviews-list">
-        {reviews.length ? (
-          reviews.slice(0, visibleCount).map((r) => (
-            <div key={r.id} className="review-card">
-              <div className="review-header">
-                <span className="reviewer">{r.name}</span>
-                <div className="review-rating">
-                  {[...Array(5)].map((_, i2) => (
-                    <i 
-                      key={i2} 
-                      className={`fas fa-star ${i2 < r.rating ? 'filled' : 'empty'}`}
-                      style={{
-                        color: i2 < r.rating ? '#ff4081' : '#ddd',
-                        marginRight: '2px'
-                      }}
-                    />
-                  ))}
-                  <span className="rating-value">({r.rating}/5)</span>
-                </div>
+      {/* Filters and Sorting */}
+      <div className="review-filters">
+        <div className="filter-group">
+          <label>Sort by:</label>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="sort-select">
+            <option value="newest">Most Recent</option>
+            <option value="helpful">Most Helpful</option>
+            <option value="highest">Highest Rated</option>
+            <option value="lowest">Lowest Rated</option>
+          </select>
+        </div>
+        
+        <div className="filter-group">
+          <label className="filter-checkbox">
+            <input 
+              type="checkbox" 
+              checked={showMediaOnly} 
+              onChange={(e) => setShowMediaOnly(e.target.checked)} 
+            />
+            <span>Show only reviews with media</span>
+          </label>
+        </div>
+        
+        {filterRating > 0 && (
+          <div className="active-filter">
+            Showing {filterRating} star reviews
+            <button onClick={() => setFilterRating(0)} className="clear-filter">
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Review Form */}
+      {user && (
+        <form id="reviewForm" onSubmit={handleSubmit} className="premium-review-form">
+          <div className="form-header">
+            <h3>Write Your Review</h3>
+            <p>Share your experience to help other customers</p>
+          </div>
+          
+          <div className="form-section">
+            <label>Overall Rating *</label>
+            <div className="star-rating-input">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className={`star-btn ${star <= (hoverRating || rating) ? 'active' : ''}`}
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  title={`${star} star${star !== 1 ? 's' : ''}`}
+                >
+                  <i className="fas fa-star"></i>
+                </button>
+              ))}
+              <span className="rating-label">
+                {rating > 0 ? `${rating} star${rating !== 1 ? 's' : ''}` : 'Select rating'}
+              </span>
+            </div>
+          </div>
+          
+          <div className="form-section">
+            <label htmlFor="reviewTitle">Review Title (Optional)</label>
+            <input
+              id="reviewTitle"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Summarize your experience"
+              maxLength="100"
+            />
+          </div>
+          
+          <div className="form-section">
+            <label htmlFor="reviewText">Your Review *</label>
+            <textarea
+              id="reviewText"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Tell us about your experience with this product..."
+              rows="6"
+              minLength="10"
+              maxLength="2000"
+              required
+            />
+            <div className="char-counter">
+              {reviewText.length}/2000 characters
+            </div>
+          </div>
+          
+          {/* Media Upload Section */}
+          <div className="form-section">
+            <label>Add Photos/Videos</label>
+            <p className="upload-hint">Upload up to 5 images or videos (max 10MB each)</p>
+            
+            <div className="media-upload-area">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*,video/*"
+                multiple
+                style={{ display: 'none' }}
+              />
+              
+              <div 
+                className="upload-dropzone"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.add('dragover');
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('dragover');
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('dragover');
+                  handleFileSelect({ target: { files: e.dataTransfer.files } });
+                }}
+              >
+                <i className="fas fa-cloud-upload-alt"></i>
+                <p>Click or drag files to upload</p>
+                <span className="upload-types">JPG, PNG, GIF, MP4, WebM</span>
               </div>
-              <p className="review-text">{r.text}</p>
-              <span className="review-date">{r.date}</span>
-
-              {user && r.userId === user.uid && (
-                <div className="review-actions">
-                  <button 
-                    className="edit-btn"
-                    onClick={() => handleEdit(r.id, r.text, r.rating)}
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    className="delete-btn"
-                    onClick={() => handleDelete(r.id)}
-                  >
-                    Delete
-                  </button>
+              
+              {/* Selected Files Preview */}
+              {selectedFiles.length > 0 && (
+                <div className="selected-files">
+                  <h4>Selected Files ({selectedFiles.length}/5)</h4>
+                  <div className="file-previews">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="file-preview">
+                        {file.type.startsWith('image/') ? (
+                          <img 
+                            src={URL.createObjectURL(file)} 
+                            alt={`Preview ${index + 1}`}
+                            className="file-thumbnail"
+                          />
+                        ) : (
+                          <div className="file-thumbnail video">
+                            <i className="fas fa-video"></i>
+                            <span>{file.name}</span>
+                          </div>
+                        )}
+                        <button 
+                          type="button"
+                          className="remove-file"
+                          onClick={() => removeFile(index)}
+                          title="Remove file"
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                        <div className="file-info">
+                          <span className="file-name">{file.name}</span>
+                          <span className="file-size">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          ))
-        ) : (
-          <p className="no-reviews">No reviews yet. Be the first to review!</p>
-        )}
+          </div>
+          
+          {/* Verification Notice */}
+          <div className="verification-notice">
+            <i className="fas fa-shield-alt"></i>
+            <span>Only verified purchases can submit reviews</span>
+          </div>
+          
+          {/* Submit Button */}
+          <div className="form-actions">
+            <button 
+              type="button" 
+              className="cancel-btn"
+              onClick={() => {
+                setReviewText('');
+                setTitle('');
+                setRating(0);
+                setSelectedFiles([]);
+              }}
+              disabled={submitting || uploading}
+            >
+              Clear Form
+            </button>
+            <button 
+              type="submit" 
+              className="submit-btn"
+              disabled={submitting || uploading || !rating || reviewText.trim().length < 10}
+            >
+              {submitting || uploading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i>
+                  {uploading ? 'Uploading...' : 'Submitting...'}
+                </>
+              ) : (
+                'Submit Review'
+              )}
+            </button>
+          </div>
+        </form>
+      )}
 
-        {reviews.length > visibleCount && (
-          <button 
-            onClick={loadMore} 
-            className="load-more-reviews"
-          >
-            Load More Reviews ({reviews.length - visibleCount} more)
-          </button>
+      {/* Reviews List */}
+      <div className="reviews-list">
+        {reviews.length > 0 ? (
+          reviews.slice(0, visibleCount).map((review) => {
+            const voteKey = `${productId}_${review.id}`;
+            const hasVotedHelpful = userVotes[voteKey]?.helpful || false;
+            
+            return (
+              <div 
+                key={review.id} 
+                className={`review-card ${review.featured ? 'featured' : ''} ${review.verifiedPurchase ? 'verified' : ''}`}
+              >
+                {review.featured && (
+                  <div className="featured-badge">
+                    <i className="fas fa-award"></i> Featured Review
+                  </div>
+                )}
+                
+                <div className="review-card-header">
+                  <div className="reviewer-info">
+                    {review.userAvatar ? (
+                      <img 
+                        src={review.userAvatar} 
+                        alt={review.userName || 'Anonymous'}
+                        className="reviewer-avatar"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.userName || 'User')}&background=random`;
+                        }}
+                      />
+                    ) : (
+                      <div className="reviewer-avatar-placeholder">
+                        {(review.userName || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    
+                    <div className="reviewer-details">
+                      <div className="reviewer-name">
+                        {review.userName || 'Anonymous User'}
+                        {review.verifiedPurchase && (
+                          <span className="verified-badge">
+                            <i className="fas fa-check-circle"></i> Verified Purchase
+                          </span>
+                        )}
+                      </div>
+                      <div className="review-date">{review.date || 'Recently'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="review-rating-display">
+                    <div className="stars-static">
+                      {[...Array(5)].map((_, i) => (
+                        <i 
+                          key={i} 
+                          className={`fas fa-star ${i < (review.rating || 0) ? 'filled' : ''}`}
+                        ></i>
+                      ))}
+                    </div>
+                    <div className="rating-value">{(review.rating || 0)}/5</div>
+                  </div>
+                </div>
+                
+                {review.title && (
+                  <h4 className="review-title">{review.title}</h4>
+                )}
+                
+                <p className="review-text">{review.text || 'No review text provided'}</p>
+                
+                {/* Media Gallery */}
+                {(review.media?.length > 0 || review.videos?.length > 0) && (
+                  <div className="review-media-gallery">
+                    {review.media?.map((image, index) => (
+                      <div key={index} className="media-item">
+                        <img 
+                          src={image.url} 
+                          alt={`Review image ${index + 1}`}
+                          onClick={() => window.open(image.url, '_blank')}
+                          className="media-image"
+                        />
+                      </div>
+                    ))}
+                    
+                    {review.videos?.map((video, index) => (
+                      <div key={index} className="media-item">
+                        <video 
+                          controls
+                          className="media-video"
+                          poster={video.thumbnail}
+                        >
+                          <source src={video.url} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Review Actions */}
+                <div className="review-actions-footer">
+                  <div className="helpful-section">
+                    <button 
+                      className={`helpful-btn ${hasVotedHelpful ? 'voted' : ''}`}
+                      onClick={() => handleVoteHelpful(review.id, review.helpfulCount || 0)}
+                    >
+                      <i className="fas fa-thumbs-up"></i>
+                      {hasVotedHelpful ? 'Helpful' : 'Was this helpful?'}
+                      {review.helpfulCount > 0 && (
+                        <span className="helpful-count">({review.helpfulCount})</span>
+                      )}
+                    </button>
+                    
+                    <div className="reactions">
+                      <button 
+                        className="reaction-btn"
+                        onClick={() => handleReaction(review.id, 'funny')}
+                        title="Funny"
+                      >
+                        😂 {review.reactions?.funny || 0}
+                      </button>
+                      <button 
+                        className="reaction-btn"
+                        onClick={() => handleReaction(review.id, 'love')}
+                        title="Love"
+                      >
+                        ❤️ {review.reactions?.love || 0}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="action-buttons">
+                    <button 
+                      className="report-btn"
+                      onClick={() => handleReport(review.id)}
+                      title="Report inappropriate content"
+                    >
+                      <i className="fas fa-flag"></i> Report
+                    </button>
+                    
+                    {user && review.userId === user.uid && (
+                      <>
+                        <button 
+                          className="edit-btn"
+                          onClick={() => handleEdit(review.id, review.title, review.text, review.rating)}
+                        >
+                          <i className="fas fa-edit"></i> Edit
+                        </button>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => handleDelete(review.id)}
+                        >
+                          <i className="fas fa-trash"></i> Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="no-reviews-placeholder">
+            <i className="fas fa-comments"></i>
+            <h3>No reviews yet</h3>
+            <p>Be the first to share your experience with this product!</p>
+            {!user && (
+              <button 
+                className="login-to-review"
+                onClick={() => navigate('/login')}
+              >
+                Login to Write Review
+              </button>
+            )}
+          </div>
         )}
+        
+        {/* Load More Button */}
+        {reviews.length > visibleCount && (
+          <div className="load-more-container">
+            <button onClick={loadMore} className="load-more-reviews">
+              Load More Reviews ({reviews.length - visibleCount} remaining)
+              <i className="fas fa-chevron-down"></i>
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* Review Guidelines */}
+      <div className="review-guidelines">
+        <h4><i className="fas fa-info-circle"></i> Review Guidelines</h4>
+        <ul>
+          <li>Share your genuine experience with the product</li>
+          <li>Include photos/videos to make your review more helpful</li>
+          <li>Focus on the product's features, quality, and value</li>
+          <li>Be respectful - no offensive language or personal attacks</li>
+          <li>Don't include personal information or external links</li>
+          <li>Reviews are moderated and may be removed if they violate guidelines</li>
+        </ul>
       </div>
     </div>
   );

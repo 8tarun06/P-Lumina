@@ -5,7 +5,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: black !important; /* Optional: match your brand */
+  background-color: #f8f3ef !important; /* Optional: match your brand */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,5 +17,5 @@
   max-height: 90%;
   object-fit: contain;
   border-radius: 12px;
-  background-color: black !important;
+  background-color: #f8f3ef !important;
 }

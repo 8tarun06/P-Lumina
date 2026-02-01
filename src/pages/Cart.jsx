@@ -10,107 +10,6 @@ import Sidebar from "../components/Sidebar";
 import "../cart.css";
 import "../bar.css";
 
-/* ---------- coupon helpers (unchanged, exact same behavior) ---------- */
-// validateCoupon, checkUserOrderHistory, calculateCouponDiscount, calculateCartSummary
-// (copy them exactly from your previous file so behaviour remains identical)
-const validateCoupon = (coupon, subtotal, appliedCoupons, hasPreviousOrders) => {
-  if (appliedCoupons.some(applied => applied.code === coupon.code)) {
-    return { isValid: false, message: 'Coupon already applied' };
-  }
-  if (coupon.firstOrderOnly && hasPreviousOrders) {
-    return { isValid: false, message: 'This coupon is only valid for your first order' };
-  }
-  if (subtotal < coupon.minOrder) {
-    return { isValid: false, message: `Add ₹${(coupon.minOrder - subtotal).toFixed(2)} more to use this coupon` };
-  }
-  if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
-    return { isValid: false, message: 'Coupon has expired' };
-  }
-  if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-    return { isValid: false, message: 'Coupon usage limit reached' };
-  }
-  const hasPercentageCoupon = appliedCoupons.some(c => c.type === 'percentage');
-  const hasFixedCoupon = appliedCoupons.some(c => c.type === 'fixed');
-  const hasShippingCoupon = appliedCoupons.some(c => c.type === 'shipping');
-
-  if (coupon.type === 'percentage' && hasPercentageCoupon) {
-    return { isValid: false, message: 'Only one percentage coupon can be applied' };
-  }
-  if (coupon.type === 'fixed' && hasFixedCoupon) {
-    return { isValid: false, message: 'Only one fixed amount coupon can be applied' };
-  }
-  if (coupon.type === 'shipping' && hasShippingCoupon) {
-    return { isValid: false, message: 'Only one shipping coupon can be applied' };
-  }
-  return { isValid: true, message: 'Coupon applied successfully' };
-};
-
-const checkUserOrderHistory = async (userId) => {
-  try {
-    const ordersRef = collection(db, "orders");
-    const q = query(ordersRef, where("userId", "==", userId));
-    const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
-  } catch (error) {
-    console.error("Error checking order history:", error);
-    return false;
-  }
-};
-
-const calculateCouponDiscount = (coupon, subtotal) => {
-  const safeSubtotal = parseFloat(subtotal) || 0;
-  const couponValue = parseFloat(coupon.value) || 0;
-  switch (coupon.type) {
-    case 'percentage':
-      return (safeSubtotal * couponValue) / 100;
-    case 'fixed':
-      return Math.min(couponValue, safeSubtotal);
-    case 'shipping':
-      return 0;
-    default:
-      return 0;
-  }
-};
-
-const calculateCartSummary = (cart, appliedCoupons) => {
-  const subtotal = cart.reduce((total, item) => {
-    const price = parseFloat(item.displayPrice || item.price) || 0;
-    const quantity = parseInt(item.quantity) || 1;
-    return total + price * quantity;
-  }, 0);
-
-  let totalDiscount = 0;
-  let shipping = 50;
-  let shippingSavings = 0;
-  const couponResults = [];
-
-  appliedCoupons.forEach(coupon => {
-    const discountAmount = calculateCouponDiscount(coupon, subtotal);
-    totalDiscount += discountAmount;
-    couponResults.push({ ...coupon, discountAmount });
-    if (coupon.type === 'shipping' && subtotal >= coupon.minOrder) {
-      shippingSavings = 50;
-      shipping = 0;
-    }
-  });
-
-  const taxableAmount = Math.max(0, subtotal - totalDiscount);
-  const tax = taxableAmount * 0.18;
-  const total = Math.max(0, taxableAmount + tax + shipping);
-
-  return {
-    subtotal: parseFloat(subtotal.toFixed(2)),
-    discount: parseFloat(totalDiscount.toFixed(2)),
-    shipping: parseFloat(shipping.toFixed(2)),
-    tax: parseFloat(tax.toFixed(2)),
-    total: parseFloat(total.toFixed(2)),
-    itemCount: cart.reduce((sum, item) => sum + (item.quantity || 1), 0),
-    totalSavings: parseFloat(totalDiscount.toFixed(2)),
-    shippingSavings: parseFloat(shippingSavings.toFixed(2)),
-    couponResults
-  };
-};
-
 /* ---------- MAIN COMPONENT ---------- */
 function Cart() {
   const navigate = useNavigate();
@@ -124,8 +23,218 @@ function Cart() {
   const [showCouponSection, setShowCouponSection] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [showVariantModal, setShowVariantModal] = useState(false);
+  const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
   const searchInputRef = useRef(null);
   const { showModal } = useGlobalModal();
+
+  /* ---------- HELPER FUNCTIONS ---------- */
+
+  const hasVariants = (item) => {
+    return item.productData?.variants &&
+           Object.keys(item.productData.variants).length > 0;
+  };
+
+  const handleVariantAwareIncrease = (item) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // If NO variants → normal quantity increase
+    if (!hasVariants(item)) {
+      increaseQuantity(item.id, item.selectedVariants || item.variants);
+      return;
+    }
+
+    // If HAS variants → show professional modal with clear options
+    showModal({
+      title: "Add Another Item",
+      message: `How would you like to add another ${item.name}?`,
+      type: "choice",
+      actions: [
+        {
+          label: "Add same variant",
+          primary: true,
+          onClick: () => {
+            // Increase quantity of existing variant
+            increaseQuantity(item.id, item.selectedVariants || item.variants);
+          }
+        },
+        {
+          label: "Choose different variant",
+          primary: false,
+          onClick: () => {
+            // Open variant selection modal
+            openVariantSelection(item);
+          }
+        },
+        {
+          label: "Cancel",
+          primary: false,
+          onClick: () => {}
+        }
+      ]
+    });
+  };
+
+  const openVariantSelection = (item) => {
+    setSelectedProductForVariant(item);
+    setShowVariantModal(true);
+  };
+
+  const handleVariantModalConfirm = async (selectedVariants) => {
+    await addNewVariantToCart(selectedProductForVariant, selectedVariants);
+    setShowVariantModal(false);
+    setSelectedProductForVariant(null);
+  };
+
+  const addNewVariantToCart = async (item, selectedVariants) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const cartRef = doc(db, "carts", user.uid);
+    const currentCart = [...cart];
+
+    const variantKey = JSON.stringify(selectedVariants || {});
+
+    // Check if SAME variant already exists
+    const existingIndex = currentCart.findIndex(
+      (x) =>
+        x.id === item.id &&
+        JSON.stringify(x.selectedVariants || x.variants || {}) === variantKey
+    );
+
+    let updatedCart;
+
+    if (existingIndex !== -1) {
+      // Variant exists → increase quantity
+      updatedCart = currentCart.map((x, i) =>
+        i === existingIndex
+          ? { ...x, quantity: x.quantity + 1 }
+          : x
+      );
+    } else {
+      // New variant → add new cart line
+      updatedCart = [
+        ...currentCart,
+        {
+          ...item,
+          selectedVariants,
+          quantity: 1
+        }
+      ];
+    }
+
+    await updateDoc(cartRef, { items: updatedCart });
+    setCart(updatedCart);
+    setCartCount(updatedCart.reduce((s, i) => s + i.quantity, 0));
+    
+    // Show success message
+    showModal({
+      title: "Added to Cart",
+      message: `${item.name} with selected variant has been added to your cart.`,
+      type: "success"
+    });
+  };
+
+  const validateCoupon = (coupon, subtotal, appliedCoupons, hasPreviousOrders) => {
+    if (appliedCoupons.some(applied => applied.code === coupon.code)) {
+      return { isValid: false, message: 'Coupon already applied' };
+    }
+    if (coupon.firstOrderOnly && hasPreviousOrders) {
+      return { isValid: false, message: 'This coupon is only valid for your first order' };
+    }
+    if (subtotal < coupon.minOrder) {
+      return { isValid: false, message: `Add ₹${(coupon.minOrder - subtotal).toFixed(2)} more to use this coupon` };
+    }
+    if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
+      return { isValid: false, message: 'Coupon has expired' };
+    }
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+      return { isValid: false, message: 'Coupon usage limit reached' };
+    }
+    const hasPercentageCoupon = appliedCoupons.some(c => c.type === 'percentage');
+    const hasFixedCoupon = appliedCoupons.some(c => c.type === 'fixed');
+    const hasShippingCoupon = appliedCoupons.some(c => c.type === 'shipping');
+
+    if (coupon.type === 'percentage' && hasPercentageCoupon) {
+      return { isValid: false, message: 'Only one percentage coupon can be applied' };
+    }
+    if (coupon.type === 'fixed' && hasFixedCoupon) {
+      return { isValid: false, message: 'Only one fixed amount coupon can be applied' };
+    }
+    if (coupon.type === 'shipping' && hasShippingCoupon) {
+      return { isValid: false, message: 'Only one shipping coupon can be applied' };
+    }
+    return { isValid: true, message: 'Coupon applied successfully' };
+  };
+
+  const checkUserOrderHistory = async (userId) => {
+    try {
+      const ordersRef = collection(db, "orders");
+      const q = query(ordersRef, where("userId", "==", userId));
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty;
+    } catch (error) {
+      console.error("Error checking order history:", error);
+      return false;
+    }
+  };
+
+  const calculateCouponDiscount = (coupon, subtotal) => {
+    const safeSubtotal = parseFloat(subtotal) || 0;
+    const couponValue = parseFloat(coupon.value) || 0;
+    switch (coupon.type) {
+      case 'percentage':
+        return (safeSubtotal * couponValue) / 100;
+      case 'fixed':
+        return Math.min(couponValue, safeSubtotal);
+      case 'shipping':
+        return 0;
+      default:
+        return 0;
+    }
+  };
+
+  const calculateCartSummary = (cart, appliedCoupons) => {
+    const subtotal = cart.reduce((total, item) => {
+      const price = parseFloat(item.displayPrice || item.price) || 0;
+      const quantity = parseInt(item.quantity) || 1;
+      return total + price * quantity;
+    }, 0);
+
+    let totalDiscount = 0;
+    let shipping = 50;
+    let shippingSavings = 0;
+    const couponResults = [];
+
+    appliedCoupons.forEach(coupon => {
+      const discountAmount = calculateCouponDiscount(coupon, subtotal);
+      totalDiscount += discountAmount;
+      couponResults.push({ ...coupon, discountAmount });
+      if (coupon.type === 'shipping' && subtotal >= coupon.minOrder) {
+        shippingSavings = 50;
+        shipping = 0;
+      }
+    });
+
+    const taxableAmount = Math.max(0, subtotal - totalDiscount);
+    const tax = taxableAmount * 0.18;
+    const total = Math.max(0, taxableAmount + tax + shipping);
+
+    return {
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      discount: parseFloat(totalDiscount.toFixed(2)),
+      shipping: parseFloat(shipping.toFixed(2)),
+      tax: parseFloat(tax.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
+      itemCount: cart.reduce((sum, item) => sum + (item.quantity || 1), 0),
+      totalSavings: parseFloat(totalDiscount.toFixed(2)),
+      shippingSavings: parseFloat(shippingSavings.toFixed(2)),
+      couponResults
+    };
+  };
+
+  /* ---------- USE EFFECTS ---------- */
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -166,6 +275,8 @@ function Cart() {
   useEffect(() => {
     console.log('Cart items updated:', cart.length);
   }, [cart, searchTerm]);
+
+  /* ---------- CART FUNCTIONS ---------- */
 
   const loadAvailableCoupons = async () => {
     try {
@@ -313,18 +424,30 @@ function Cart() {
     };
   };
 
-  /* ---------- cart CRUD functions (kept identical behaviour) ---------- */
-  const decreaseQuantity = async (itemId, selectedVariants) => {
+  /* ---------- CART CRUD FUNCTIONS ---------- */
+
+  const decreaseQuantity = async (itemId, selectedVariants = {}) => {
     const user = auth.currentUser;
     if (!user) return;
+    
     const cartRef = doc(db, "carts", user.uid);
     const currentCart = [...cart];
-    const index = currentCart.findIndex((item) =>
-      item.id === itemId &&
-      JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {})
-    );
-    if (index === -1) return;
+    
+    // Create consistent variant key for comparison
+    const variantKey = JSON.stringify(selectedVariants || {});
+    
+    const index = currentCart.findIndex((item) => {
+      const itemVariantKey = JSON.stringify(item.selectedVariants || item.variants || {});
+      return item.id === itemId && itemVariantKey === variantKey;
+    });
+    
+    if (index === -1) {
+      console.log("Item not found for decrease:", itemId, variantKey);
+      return;
+    }
+    
     if (currentCart[index].quantity > 1) {
+      // Decrease quantity
       const updatedCart = currentCart.map((item, idx) =>
         idx === index ? { ...item, quantity: item.quantity - 1 } : item
       );
@@ -332,6 +455,7 @@ function Cart() {
       setCart(updatedCart);
       setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
     } else {
+      // Remove item entirely when quantity reaches 0
       await updateDoc(cartRef, { items: arrayRemove(currentCart[index]) });
       const newCart = currentCart.filter((item, idx) => idx !== index);
       setCart(newCart);
@@ -339,59 +463,195 @@ function Cart() {
     }
   };
 
-  const increaseQuantity = async (itemId, selectedVariants) => {
+  const increaseQuantity = async (itemId, selectedVariants = {}) => {
     const user = auth.currentUser;
     if (!user) return;
+    
     const cartRef = doc(db, "carts", user.uid);
     const currentCart = [...cart];
-    const index = currentCart.findIndex((item) =>
-      item.id === itemId &&
-      JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {})
-    );
-    if (index === -1) return;
+    
+    // Create consistent variant key for comparison
+    const variantKey = JSON.stringify(selectedVariants || {});
+    
+    const index = currentCart.findIndex((item) => {
+      const itemVariantKey = JSON.stringify(item.selectedVariants || item.variants || {});
+      return item.id === itemId && itemVariantKey === variantKey;
+    });
+    
+    if (index === -1) {
+      console.error("Item not found in cart for increase:", {
+        itemId,
+        variantKey,
+        selectedVariants,
+        currentCart: currentCart.map(item => ({
+          id: item.id,
+          selectedVariants: item.selectedVariants,
+          variants: item.variants,
+          itemVariantKey: JSON.stringify(item.selectedVariants || item.variants || {})
+        }))
+      });
+      showModal({
+        title: "Error",
+        message: "Could not find item in cart. Please refresh the page.",
+        type: "error"
+      });
+      return;
+    }
+    
     const updatedCart = currentCart.map((item, idx) =>
       idx === index ? { ...item, quantity: item.quantity + 1 } : item
     );
-    await updateDoc(cartRef, { items: updatedCart });
-    setCart(updatedCart);
-    setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
+    
+    try {
+      await updateDoc(cartRef, { items: updatedCart });
+      setCart(updatedCart);
+      setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
+      
+      // Show success message
+      showModal({
+        title: "Quantity Updated",
+        message: `${currentCart[index].name} quantity increased to ${updatedCart[index].quantity}.`,
+        type: "success"
+      });
+    } catch (error) {
+      console.error("Error increasing quantity:", error);
+      showModal({
+        title: "Error",
+        message: "Failed to update quantity. Please try again.",
+        type: "error"
+      });
+    }
   };
 
-  const removeItem = async (itemId, selectedVariants) => {
+  const removeItem = async (itemId, selectedVariants = {}) => {
     const user = auth.currentUser;
     if (!user) return;
+
     const cartRef = doc(db, "carts", user.uid);
-    const itemToRemove = cart.find((item) =>
-      item.id === itemId &&
-      JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {})
-    );
-    if (!itemToRemove) return;
-    await updateDoc(cartRef, { items: arrayRemove(itemToRemove) });
-    const newCart = cart.filter((item) =>
-      !(item.id === itemId &&
-        JSON.stringify(item.selectedVariants || {}) === JSON.stringify(selectedVariants || {}))
-    );
+    const currentCart = [...cart];
+
+    // Create a stable signature to compare variants reliably
+    const variantKey = JSON.stringify(selectedVariants || {});
+
+    const newCart = currentCart.filter((item) => {
+      const itemVariantKey = JSON.stringify(item.selectedVariants || item.variants || {});
+      return !(item.id === itemId && itemVariantKey === variantKey);
+    });
+
+    // Update Firestore by replacing items array
+    await updateDoc(cartRef, { items: newCart });
+
     setCart(newCart);
     setCartCount(newCart.reduce((total, item) => total + (item.quantity || 1), 0));
+  };
+
+  const handleRemoveWithAnimation = (item) => {
+    const variantKey = item.selectedVariants || item.variants || {};
+    
+    // Mark item visually as removing
+    setCart((prev) =>
+      prev.map((x) => {
+        const currentVariantKey = x.selectedVariants || x.variants || {};
+        return x.id === item.id &&
+          JSON.stringify(currentVariantKey) === JSON.stringify(variantKey)
+          ? { ...x, removing: true }
+          : x
+      })
+    );
+
+    // Wait for animation then remove
+    setTimeout(() => {
+      removeItem(item.id, variantKey);
+    }, 300);
   };
 
   const formatPrice = (price) => `₹ ${parseFloat(price).toFixed(2)}`;
   const cartSummary = calculateCartSummary(cart, appliedCoupons);
 
-const renderVariantDetails = (item) => {
-  if (!item.selectedVariants) return null;
+  /* ---------- VARIANT MODAL COMPONENT ---------- */
+  const VariantModal = ({ product, onConfirm, onClose }) => {
+    const [selectedVariants, setSelectedVariants] = useState({});
+    const variants = product?.productData?.variants || {};
 
-  return (
-    <div className="clean-variants">
-      {Object.entries(item.selectedVariants).map(([key, value]) => (
-        <span key={key} className="variant-label">
-          {key.toUpperCase()}: {value}
-        </span>
-      ))}
-    </div>
-  );
-};
+    const handleVariantChange = (variantKey, value) => {
+      setSelectedVariants(prev => ({
+        ...prev,
+        [variantKey]: value
+      }));
+    };
 
+    const handleConfirm = () => {
+      if (Object.keys(selectedVariants).length === Object.keys(variants).length) {
+        onConfirm(selectedVariants);
+      } else {
+        showModal({
+          title: "Selection Incomplete",
+          message: "Please select all variant options before adding to cart.",
+          type: "error"
+        });
+      }
+    };
+
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content variant-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>Select Variant</h3>
+            <button className="modal-close" onClick={onClose}>×</button>
+          </div>
+          
+          <div className="modal-body">
+            <div className="current-variant-info">
+              <p>Adding another: <strong>{product?.name}</strong></p>
+              <p className="modal-price">{formatPrice(product?.displayPrice || product?.price)}</p>
+            </div>
+            
+            {Object.entries(variants).map(([key, options]) => (
+              <div key={key} className="variant-option-group">
+                <label>{key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                <div className="variant-options">
+                  {options.map((option, index) => {
+                    const isSelected = selectedVariants[key]?.value === option.value;
+                    return (
+                      <button
+                        key={index}
+                        className={`variant-option-btn ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleVariantChange(key, option)}
+                        style={{
+                          backgroundColor: option.value?.startsWith('#') ? option.value : 'transparent',
+                          borderColor: isSelected ? 'var(--primary-color)' : 'var(--border-color)'
+                        }}
+                      >
+                        {option.name || option.value}
+                        {option.value?.startsWith('#') && (
+                          <span className="color-dot" style={{ backgroundColor: option.value }}></span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="modal-footer">
+            <button className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button 
+              className="btn-primary" 
+              onClick={handleConfirm}
+              disabled={Object.keys(selectedVariants).length !== Object.keys(variants).length}
+            >
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ---------- RENDER LOGIC ---------- */
 
   if (loading) {
     // skeleton loader - visually nicer than text
@@ -430,106 +690,179 @@ const renderVariantDetails = (item) => {
                 <div className="empty-cart" role="status" aria-label="Empty cart">
                   <h3>Your cart is empty</h3>
                   <p>Looks like you haven't added anything yet. Start shopping to add products here.</p>
-                  <button className="apply-coupon-btn continue-shopping-btn" onClick={() => navigate("/")}>Continue Shopping</button>
+                  <button className="apply-coupon-btn continue-shopping-btn" onClick={() => navigate("/home")}>Continue Shopping</button>
                 </div>
               ) : (
                 <>
-                  <p style={{color: 'var(--subtext)', marginBottom: '1rem'}}>Items in cart: <strong style={{color:'var(--text)'}}>{filteredCart.length}</strong></p>
-{filteredCart.map((item) => {
-  const price = parseFloat(item.displayPrice || item.price) || 0;
-  const quantity = parseInt(item.quantity) || 1;
-  const selectedVariants = item.selectedVariants || {};
-  const itemImage = item.variantImages && item.variantImages.length > 0 ? item.variantImages[0] : item.image || (item.images && item.images[0]) || '/placeholder-image.jpg';
-  const uniqueKey = `${item.id}-${JSON.stringify(selectedVariants)}`;
+                  <div className="cart-header">
+                    <p style={{color: 'var(--subtext)', marginBottom: '1rem'}}>
+                      Items in cart: <strong style={{color:'var(--text)'}}>{filteredCart.length}</strong>
+                    </p>
+                    <div className="cart-separator"></div>
+                  </div>
+                  
+                  {filteredCart.map((item, index) => {
+                    const price = parseFloat(item.displayPrice || item.price) || 0;
+                    const quantity = parseInt(item.quantity) || 1;
+                    const selectedVariants = item.selectedVariants || item.variants || {};
+                    const itemImage = item.image || 
+                                     (item.variantImages && item.variantImages[0]) || 
+                                     (item.images && item.images[0]) || 
+                                     '/placeholder-image.jpg';
+                    const uniqueKey = `${item.id}-${JSON.stringify(selectedVariants)}`;
 
-  return (
-<article key={`${item.id}-${JSON.stringify(item.selectedVariants || item.variants || {})}`} className="cart-item">
-  <div className="cart-item-image-container">
-    <img
-      className="cart-item-image"
-      src={item.image}
-      alt={item.name || "product image"}
-      onError={(e) => {
-        e.target.src = "/placeholder-image.jpg";
-        e.target.alt = "Image not available";
-      }}
-    />
-  </div>
+                    return (
+                      <React.Fragment key={`${item.id}-${JSON.stringify(item.selectedVariants || item.variants || {})}`}>
+                        <article className={`cart-item ${item.removing ? "item-removing" : ""}`}>
+                          {/* Item counter */}
+                          <div className="cart-item-counter">
+                            <span className="counter-number">{index + 1}</span>
+                          </div>
 
-  <div className="cart-item-details">
-    <h3 className="cart-item-title">{item.name}</h3>
+                          {/* UPDATED IMAGE CONTAINER - MATCHING HOME PAGE STYLE */}
+                          <div className="cart-item-image-wrapper">
+                            <div className="cart-item-image-container">
+                              <img
+                                className="cart-item-image"
+                                src={itemImage}
+                                alt={item.name || "product image"}
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.target.src = "/placeholder-image.jpg";
+                                  e.target.alt = "Image not available";
+                                }}
+                              />
+                            </div>
+                          </div>
 
-    {/* 🔥 Unified Variant Display System */}
-   {/* 🔥 Premium Variant Display */}
-{(() => {
-  const variants =
-    item.selectedVariants ||
-    item.variants ||
-    item.productData?.variants ||
-    null;
+                          <div className="cart-item-details">
+                            <div className="cart-item-header">
+                              <h3 className="cart-item-title">{item.name}</h3>
+                              <div className="cart-item-subtotal">
+                                {formatPrice(price * quantity)}
+                                <span className="item-subtotal-label"> (Subtotal)</span>
+                              </div>
+                            </div>
 
-  if (!variants || Object.keys(variants).length === 0) return null;
+                            {/* 🔥 Fixed Variant Display - SAFE VERSION */}
+                            {(() => {
+                              const selected = item.selectedVariants || item.variants || {};
+                              const masterVariants = item.productData?.variants || item.variantsData || {};
 
-  return (
-    <div className="variant-pro-section">
-      {Object.entries(variants).map(([key, value]) => (
-        <div className="variant-pro-item" key={key}>
-          <span className="variant-pro-key">
-            {key.charAt(0).toUpperCase() + key.slice(1)}
-          </span>
-          <span className="variant-pro-value">
-            {typeof value === "string" ? value : value.name || value.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-})()}
+                              if (!selected || Object.keys(selected).length === 0) return null;
 
+                              return (
+                                <div className="premium-variant-wrapper">
+                                  {Object.entries(selected).map(([key, selectedValue]) => {
+                                    // SAFE HANDLING: Extract string value from object if needed
+                                    let displayValue = "";
+                                    let swatchColor = null;
+                                    
+                                    // If selectedValue is an object with a name or value property
+                                    if (selectedValue && typeof selectedValue === 'object') {
+                                      displayValue = selectedValue.name || selectedValue.value || JSON.stringify(selectedValue);
+                                      if (selectedValue.value?.startsWith("#")) swatchColor = selectedValue.value;
+                                    } else {
+                                      // If selectedValue is a string
+                                      displayValue = String(selectedValue || "");
+                                      
+                                      // Try to find matching variant in masterVariants
+                                      if (masterVariants[key] && Array.isArray(masterVariants[key])) {
+                                        const match = masterVariants[key].find(
+                                          (v) => {
+                                            if (v && typeof v === 'object') {
+                                              return v.value?.toLowerCase() === displayValue?.toLowerCase() ||
+                                                     v.name?.toLowerCase() === displayValue?.toLowerCase();
+                                            }
+                                            return false;
+                                          }
+                                        );
 
-    <p className="cart-item-price" aria-label="price">
-      {formatPrice(item.displayPrice || item.price)}
-    </p>
+                                        if (match) {
+                                          displayValue = match.name || match.value || displayValue;
+                                          if (match.value?.startsWith("#")) swatchColor = match.value;
+                                        }
+                                      }
+                                    }
 
-    <div className="cart-item-quantity" role="group" aria-label="quantity selector">
-      <button
-        aria-label="decrease quantity"
-        className="quantity-btn minus"
-        onClick={() =>
-          decreaseQuantity(item.id, item.selectedVariants || item.variants)
-        }
-      >
-        -
-      </button>
+                                    return (
+                                      <div key={key} className="premium-variant-line">
+                                        <span className="variant-title">
+                                          {key.charAt(0).toUpperCase() + key.slice(1)}
+                                        </span>
 
-      <span aria-live="polite">{item.quantity}</span>
+                                        <span className="variant-value">
+                                          {swatchColor && (
+                                            <span
+                                              className="variant-color-dot"
+                                              style={{ backgroundColor: swatchColor }}
+                                            ></span>
+                                          )}
 
-      <button
-        aria-label="increase quantity"
-        className="quantity-btn plus"
-        onClick={() =>
-          increaseQuantity(item.id, item.selectedVariants || item.variants)
-        }
-      >
-        +
-      </button>
-    </div>
-  </div>
+                                          {displayValue}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
 
-  <div className="cart-item-controls">
-    <button
-      className="cart-item-remove"
-      onClick={() =>
-        removeItem(item.id, item.selectedVariants || item.variants)
-      }
-    >
-      Remove
-    </button>
-  </div>
-</article>
+                                  <div className="variant-divider"></div>
+                                </div>
+                              );
+                            })()}
 
-  );
-})}
+                            <div className="cart-item-price-quantity">
+                              <p className="cart-item-price" aria-label="price">
+                                {formatPrice(item.displayPrice || item.price)}
+                                <span className="unit-price-label"> (Unit Price)</span>
+                              </p>
+
+                              <div className="cart-item-quantity" role="group" aria-label="quantity selector">
+                                <button
+                                  aria-label="decrease quantity"
+                                  className="quantity-btn minus"
+                                  onClick={() =>
+                                    decreaseQuantity(item.id, item.selectedVariants || item.variants)
+                                  }
+                                  disabled={item.quantity <= 1}
+                                >
+                                  -
+                                </button>
+
+                                <span aria-live="polite" className="quantity-display">
+                                  {item.quantity}
+                                </span>
+
+                                <button
+                                  className="quantity-btn plus"
+                                  onClick={() => handleVariantAwareIncrease(item)}
+                                  aria-label="increase quantity"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+
+                            <button
+                              className="remove-item-btn"
+                              onClick={() => handleRemoveWithAnimation(item)}
+                              aria-label="Remove item"
+                            >
+                              <span className="remove-icon">✕</span> Remove
+                            </button>
+                          </div>
+                        </article>
+                        
+                        {/* Add separator between items (except after last item) */}
+                        {index < filteredCart.length - 1 && (
+                          <div className="cart-item-separator">
+                            <div className="separator-line"></div>
+                            <div className="separator-dots">• • •</div>
+                            <div className="separator-line"></div>
+                          </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </>
               )}
             </section>
@@ -582,7 +915,7 @@ const renderVariantDetails = (item) => {
                           <div style={{flex:1}}>
                             <div style={{fontWeight:800,color:'var(--text)'}}>{coupon.code}</div>
                             <div style={{fontSize:13,color:'var(--subtext)'}}>{getCouponDescription(coupon)}</div>
-                            {coupon.type === 'shipping' && <div style={{color:'var(--success)',fontWeight:700,fontSize:13,marginTop:6}}>Saved ₹50 on shipping</div>}
+                            {coupon.type === 'shipping' && <div style={{color:'var(--success)',fontWeight:1000,fontSize:13,marginTop:6}}>Saved ₹50 on shipping</div>}
                           </div>
                           <div>
                             <button onClick={() => removeCoupon(coupon.code)} className="remove-coupon-btn" aria-label={`Remove coupon ${coupon.code}`}>Remove</button>
@@ -655,12 +988,23 @@ const renderVariantDetails = (item) => {
                 >
                   Proceed to Checkout
                 </button>
-
               </div>
             </aside>
           </div>
         </div>
       </div>
+
+      {/* Variant Selection Modal */}
+      {showVariantModal && (
+        <VariantModal
+          product={selectedProductForVariant}
+          onConfirm={handleVariantModalConfirm}
+          onClose={() => {
+            setShowVariantModal(false);
+            setSelectedProductForVariant(null);
+          }}
+        />
+      )}
     </>
   );
 }

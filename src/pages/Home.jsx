@@ -10,7 +10,9 @@ import {
   setDoc,
   updateDoc,
   arrayUnion,
-  query, where
+  query, 
+  where,
+  onSnapshot  // Added for realtime updates
 } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import "../home.css";
@@ -24,8 +26,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import ProductCard from "../components/ProductCard";
-import WishlistToast from "../components/WishlistToast";  // <-- add this
-
+import WishlistToast from "../components/WishlistToast";
 
 function Home() {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ function Home() {
   const autoPlayRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
   const [wishlistToast, setWishlistToast] = useState(null);
+  const [isBannersLoading, setIsBannersLoading] = useState(true); // Added for loading state
 
   
   // Mobile menu state
@@ -187,12 +189,18 @@ function Home() {
     }
   }, [currentSlide, heroBanners]);
 
-  // Fetch hero banners from Firebase with video support
+  // ======= REAL-TIME HERO BANNER LISTENER =======
   useEffect(() => {
-    const fetchHeroBanners = async () => {
-      try {
-        const bannersRef = collection(db, "heroBanners");
-        const snapshot = await getDocs(bannersRef);
+    const fetchHeroBannersRealtime = () => {
+      const bannersRef = collection(db, "heroBanners");
+      
+      // Create a query to get active banners
+      const bannersQuery = query(bannersRef, where("active", "==", true));
+      
+      // Set up realtime listener
+      const unsubscribe = onSnapshot(bannersQuery, async (snapshot) => {
+        console.log("Hero banners updated in realtime!");
+        
         const bannersList = await Promise.all(
           snapshot.docs.map(async (doc) => {
             const data = doc.data();
@@ -218,20 +226,34 @@ function Home() {
         );
         
         const validBanners = bannersList
-          .filter(banner => banner !== null && banner.active !== false)
+          .filter(banner => banner !== null)
           .sort((a, b) => (a.order || 0) - (b.order || 0));
         
         setHeroBanners(validBanners);
-      } catch (err) {
-        console.error("Failed to load hero banners:", err);
+        setIsBannersLoading(false);
+      }, (error) => {
+        console.error("Realtime hero banner error:", error);
+        setIsBannersLoading(false);
         showModal({
-          title: "Banner Loading Error",
-          message: "Could not load promotional banners",
+          title: "Banner Connection Error",
+          message: "Could not maintain live banner updates",
           type: "error"
         });
+      });
+
+      return unsubscribe;
+    };
+
+    // Start the realtime listener
+    const unsubscribe = fetchHeroBannersRealtime();
+    
+    // Cleanup listener on component unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
       }
     };
-    fetchHeroBanners();
   }, [showModal]);
 
   // Add banner validation
@@ -480,145 +502,145 @@ function Home() {
   };
 
   // Update the modal add to cart handler
-// In Home.jsx, update the handleModalAddToCart function
-const handleModalAddToCart = async (productWithVariants) => {
-  const user = auth.currentUser;
-  if (!user) {
-    showModal({
-      title: "Login First",
-      message: "Please login in to Continue",
-      type: "error",
-    });
-    navigate("/login");
-    return;
-  }
-
-  try {
-    const cartRef = doc(db, "carts", user.uid);
-    const cartSnap = await getDoc(cartRef);
-    
-    // Enhanced product data with variants
-    const productWithMeta = {
-      id: productWithVariants.id,
-      name: productWithVariants.name,
-      price: productWithVariants.price,
-      displayPrice: productWithVariants.displayPrice || productWithVariants.price,
-      category: productWithVariants.category,
-      image: productWithVariants.displayImage || productWithVariants.image || (productWithVariants.images && productWithVariants.images[0]),
-      variantImages: productWithVariants.variantImages || [],
-      selectedVariants: productWithVariants.selectedVariants || {},
-      productData: { // Store original product data for variant display
-        variants: productWithVariants.variants || {}
-      },
-      quantity: 1,
-      addedAt: Date.now(),
-    };
-
-    if (cartSnap.exists()) {
-      const existingItems = cartSnap.data().items || [];
-      
-      // Check if same product with same variants already exists
-      const alreadyExists = existingItems.find((item) => 
-        item.id === productWithMeta.id && 
-        JSON.stringify(item.selectedVariants || {}) === JSON.stringify(productWithMeta.selectedVariants || {})
-      );
-      
-      if (alreadyExists) {
-        showModal({
-          title: "Item Already in Cart",
-          message: "This product with selected variants is already in your cart",
-          type: "info",
-        });
-        return;
-      }
-      
-      await updateDoc(cartRef, {
-        items: arrayUnion(productWithMeta),
+  // In Home.jsx, update the handleModalAddToCart function
+  const handleModalAddToCart = async (productWithVariants) => {
+    const user = auth.currentUser;
+    if (!user) {
+      showModal({
+        title: "Login First",
+        message: "Please login in to Continue",
+        type: "error",
       });
-    } else {
-      await setDoc(cartRef, {
-        items: [productWithMeta],
-      });
+      navigate("/login");
+      return;
     }
 
-    showModal({
-      title: "Added to Cart",
-      message: `${productWithVariants.name} has been added to your cart.`,
-      type: "success",
-    });
-
-    setCart((prev) => [...prev, productWithMeta]);
-    fetchCartFromFirestore(); // Refresh cart
-  } catch (error) {
-    console.error("Error adding to cart:", error);
-    showModal({
-      title: "Failed to Add to Cart",
-      message: `${productWithVariants.name} failed to add to your cart.`,
-      type: "error",
-    });
-  }
-};
-
-const toggleWishlist = async (product) => {
-  const user = auth.currentUser;
-  if (!user) {
-    showModal({
-      title: "Login First To Manage Wishlist",
-      message: "Please Login First",
-      type: "error",
-    });
-    navigate("/login");
-    return;
-  }
-
-  const wishlistRef = doc(db, "wishlists", user.uid);
-
-  // --- INSTANT UI UPDATE (NO DELAY) ---
-  setWishlistIds((prev) => {
-    if (prev.includes(product.id)) {
-      return prev.filter((id) => id !== product.id);
-    } else {
-      return [...prev, product.id];
-    }
-  });
-
-  // --- SHOW TOAST INSTANTLY ---
-  setWishlistToast({
-    text: wishlistIds.includes(product.id)
-      ? "Removed from Wishlist"
-      : "Saved to Wishlist",
-  });
-
-  // --- FIREBASE SYNC (ASYNC, NON-BLOCKING) ---
-  (async () => {
     try {
-      const wishlistSnap = await getDoc(wishlistRef);
-      let items = wishlistSnap.exists() ? wishlistSnap.data().items || [] : [];
+      const cartRef = doc(db, "carts", user.uid);
+      const cartSnap = await getDoc(cartRef);
+      
+      // Enhanced product data with variants
+      const productWithMeta = {
+        id: productWithVariants.id,
+        name: productWithVariants.name,
+        price: productWithVariants.price,
+        displayPrice: productWithVariants.displayPrice || productWithVariants.price,
+        category: productWithVariants.category,
+        image: productWithVariants.displayImage || productWithVariants.image || (productWithVariants.images && productWithVariants.images[0]),
+        variantImages: productWithVariants.variantImages || [],
+        selectedVariants: productWithVariants.selectedVariants || {},
+        productData: { // Store original product data for variant display
+          variants: productWithVariants.variants || {}
+        },
+        quantity: 1,
+        addedAt: Date.now(),
+      };
 
-      const alreadyExists = items.some((i) => i.id === product.id);
-
-      if (alreadyExists) {
-        items = items.filter((i) => i.id !== product.id);
+      if (cartSnap.exists()) {
+        const existingItems = cartSnap.data().items || [];
+        
+        // Check if same product with same variants already exists
+        const alreadyExists = existingItems.find((item) => 
+          item.id === productWithMeta.id && 
+          JSON.stringify(item.selectedVariants || {}) === JSON.stringify(productWithMeta.selectedVariants || {})
+        );
+        
+        if (alreadyExists) {
+          showModal({
+            title: "Item Already in Cart",
+            message: "This product with selected variants is already in your cart",
+            type: "info",
+          });
+          return;
+        }
+        
+        await updateDoc(cartRef, {
+          items: arrayUnion(productWithMeta),
+        });
       } else {
-        items.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          category: product.category,
-          image:
-            product.displayImage ||
-            product.image ||
-            (product.images && product.images[0]),
-          addedAt: Date.now(),
+        await setDoc(cartRef, {
+          items: [productWithMeta],
         });
       }
 
-      await setDoc(wishlistRef, { items });
-    } catch (err) {
-      console.error("Wishlist sync error:", err);
+      showModal({
+        title: "Added to Cart",
+        message: `${productWithVariants.name} has been added to your cart.`,
+        type: "success",
+      });
+
+      setCart((prev) => [...prev, productWithMeta]);
+      fetchCartFromFirestore(); // Refresh cart
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      showModal({
+        title: "Failed to Add to Cart",
+        message: `${productWithVariants.name} failed to add to your cart.`,
+        type: "error",
+      });
     }
-  })();
-};
+  };
+
+  const toggleWishlist = async (product) => {
+    const user = auth.currentUser;
+    if (!user) {
+      showModal({
+        title: "Login First To Manage Wishlist",
+        message: "Please Login First",
+        type: "error",
+      });
+      navigate("/login");
+      return;
+    }
+
+    const wishlistRef = doc(db, "wishlists", user.uid);
+
+    // --- INSTANT UI UPDATE (NO DELAY) ---
+    setWishlistIds((prev) => {
+      if (prev.includes(product.id)) {
+        return prev.filter((id) => id !== product.id);
+      } else {
+        return [...prev, product.id];
+      }
+    });
+
+    // --- SHOW TOAST INSTANTLY ---
+    setWishlistToast({
+      text: wishlistIds.includes(product.id)
+        ? "Removed from Wishlist"
+        : "Saved to Wishlist",
+    });
+
+    // --- FIREBASE SYNC (ASYNC, NON-BLOCKING) ---
+    (async () => {
+      try {
+        const wishlistSnap = await getDoc(wishlistRef);
+        let items = wishlistSnap.exists() ? wishlistSnap.data().items || [] : [];
+
+        const alreadyExists = items.some((i) => i.id === product.id);
+
+        if (alreadyExists) {
+          items = items.filter((i) => i.id !== product.id);
+        } else {
+          items.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            category: product.category,
+            image:
+              product.displayImage ||
+              product.image ||
+              (product.images && product.images[0]),
+            addedAt: Date.now(),
+          });
+        }
+
+        await setDoc(wishlistRef, { items });
+      } catch (err) {
+        console.error("Wishlist sync error:", err);
+      }
+    })();
+  };
 
 
 
@@ -814,28 +836,28 @@ const toggleWishlist = async (product) => {
   };
 
   useEffect(() => {
-  const handleScroll = () => {
-    const banner = document.querySelector(".ultra-hero-wrapper");
-    if (!banner) return;
+    const handleScroll = () => {
+      const banner = document.querySelector(".ultra-hero-wrapper");
+      if (!banner) return;
 
-    const scrollY = window.scrollY;
-    if (scrollY < 400) {
-      banner.classList.add("parallax-active");
-    } else {
-      banner.classList.remove("parallax-active");
-    }
-  };
+      const scrollY = window.scrollY;
+      if (scrollY < 400) {
+        banner.classList.add("parallax-active");
+      } else {
+        banner.classList.remove("parallax-active");
+      }
+    };
 
-  window.addEventListener("scroll", handleScroll);
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-{wishlistToast && (
-  <WishlistToast 
-    text={wishlistToast.text}
-    onClose={() => setWishlistToast(null)}
-  />
-)}
+  {wishlistToast && (
+    <WishlistToast 
+      text={wishlistToast.text}
+      onClose={() => setWishlistToast(null)}
+    />
+  )}
 
 
   return (
@@ -931,66 +953,77 @@ const toggleWishlist = async (product) => {
         <main className="main-body">
           {/* === ULTRA SWIPER AMAZON HERO BANNER === */}
           <section className="ultra-hero-wrapper">
-            <Swiper
-              modules={[Autoplay, Pagination, Navigation]}
-              slidesPerView={1}
-              loop={true}
-              autoplay={{ delay: 3500 }}
-              pagination={{ clickable: true }}
-              navigation={true}
-              className="ultra-hero-swiper"
-            >
-              {heroBanners.map((banner, index) => (
-                <SwiperSlide key={banner.id}>
-                  <div
-                    className="ultra-hero-slide"
-                    onClick={() => handleBannerClick(banner)}
-                  >
-                    {banner.type === "video" ? (
-                      <video
-                        className="ultra-hero-media"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        src={banner.mediaUrl}
-                      />
-                    ) : (
-                      <img
-                        className="ultra-hero-media"
-                        src={banner.mediaUrl}
-                        alt={banner.title || "Banner"}
-                        loading="eager"
-                      />
-                    )}
+            {isBannersLoading ? (
+              <div className="banner-loading-skeleton">
+                <div className="skeleton-slide"></div>
+              </div>
+            ) : heroBanners.length === 0 ? (
+              <div className="no-banners-message">
+                <p>No banners available</p>
+              </div>
+            ) : (
+              <Swiper
+                modules={[Autoplay, Pagination, Navigation]}
+                slidesPerView={1}
+                loop={true}
+                autoplay={{ delay: 3500, disableOnInteraction: false }}
+                pagination={{ clickable: true }}
+                navigation={true}
+                className="ultra-hero-swiper"
+                key={heroBanners.length} // Force re-render when banners change
+              >
+                {heroBanners.map((banner, index) => (
+                  <SwiperSlide key={banner.id}>
+                    <div
+                      className="ultra-hero-slide"
+                      onClick={() => handleBannerClick(banner)}
+                    >
+                      {banner.type === "video" ? (
+                        <video
+                          className="ultra-hero-media"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          src={banner.mediaUrl}
+                        />
+                      ) : (
+                        <img
+                          className="ultra-hero-media"
+                          src={banner.mediaUrl}
+                          alt={banner.title || "Banner"}
+                          loading="eager"
+                        />
+                      )}
 
-                    {/* Text Overlay */}
-                    {(banner.title || banner.subtitle || banner.ctaText) && (
-                      <div className="ultra-hero-content">
-                        {banner.title && (
-                          <h2 className="ultra-hero-title">{banner.title}</h2>
-                        )}
-                        {banner.subtitle && (
-                          <p className="ultra-hero-subtitle">{banner.subtitle}</p>
-                        )}
-                        {banner.ctaText && (
-                          <button
-                            className="ultra-hero-cta"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBannerClick(banner);
-                            }}
-                          >
-                            {banner.ctaText}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+                      {/* Text Overlay */}
+                      {(banner.title || banner.subtitle || banner.ctaText) && (
+                        <div className="ultra-hero-content">
+                          {banner.title && (
+                            <h2 className="ultra-hero-title">{banner.title}</h2>
+                          )}
+                          {banner.subtitle && (
+                            <p className="ultra-hero-subtitle">{banner.subtitle}</p>
+                          )}
+                          {banner.ctaText && (
+                            <button
+                              className="ultra-hero-cta"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBannerClick(banner);
+                              }}
+                            >
+                              {banner.ctaText}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </section>
 
           {/* Category Section - Hidden on mobile, shown in mobile menu */}

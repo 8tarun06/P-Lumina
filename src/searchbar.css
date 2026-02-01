@@ -3,6 +3,7 @@
   align-items: center;
   gap: 10px;
   position: relative;
+  color: #000000;
 }
 
 .search-icon {
@@ -16,6 +17,7 @@
   width: 24px;
   filter: brightness(0) invert(1);
   transition: transform 0.3s ease;
+  color: #000000;
 }
 
 .search-icon-img:hover {
@@ -37,7 +39,7 @@
   width: 100%;
   padding: 10px 36px 10px 12px;
   border-radius: 50rem;
-  border: 1px solid #ba93b1;
+  border: 1px solid #ba9c88;
   outline: none;
   font-size: 16px;
   background-color: #fff;
@@ -52,7 +54,7 @@
   background: #ffffff;
   border-radius: 50%;
   padding: 6px;
-  border: 1px solid #ba93b1;
+  border: 1px solid #ba9c88;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   transition: all 0.3s ease;

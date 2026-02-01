@@ -1,6 +1,6 @@
 // components/auth/SignupPage.jsx
 import React, { useState } from 'react';
-import { auth, db, provider } from '../firebase-config';
+import { auth, db, provider } from '../../firebase-config';
 import { 
   createUserWithEmailAndPassword, 
   sendEmailVerification,
@@ -14,7 +14,7 @@ import {
   FiCheck, FiAlertCircle 
 } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import '../index.css';
+import './AuthStyles.css';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -99,7 +99,7 @@ const SignupPage = () => {
       });
 
       // Success - redirect to verification page
-      navigate('/login', { 
+      navigate('/verify-email', { 
         state: { email: formData.email } 
       });
 
@@ -165,18 +165,20 @@ const SignupPage = () => {
         transition={{ duration: 0.5 }}
       >
         {/* Logo Section */}
-       <motion.div 
-        className="logo-section"
-        whileHover={{ scale: 1.03 }}
-      >
-        <img 
-          src="/Vyraa Logo.jpeg"
-          alt="Vyraa Fashions Logo"
-          className="brand-logo"
-        />
-        <h1 className="brand-name">Vyraa Fashions</h1>
-        <p className="brand-tagline">Join Our Community</p>
-      </motion.div>
+        <motion.div 
+          className="logo-section"
+          whileHover={{ scale: 1.05 }}
+        >
+          <motion.div 
+            className="logo-circle"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          >
+            <span className="logo-text">P</span>
+          </motion.div>
+          <h1 className="brand-name">Plumina</h1>
+          <p className="brand-tagline">Join Our Community</p>
+        </motion.div>
 
         {/* Form Section */}
         <motion.div 
@@ -211,9 +213,7 @@ const SignupPage = () => {
             <motion.div className="form-group">
               <div className="input-group">
                 <FiMail className="input-icon" />
-                
                 <input
-                
                   type="email"
                   name="email"
                   placeholder="Email Address"

@@ -1,6 +1,6 @@
 // components/auth/LoginPage.jsx
 import React, { useState } from 'react';
-import { auth, provider, db } from '../firebase-config';
+import { auth, provider, db } from '../../firebase-config';
 import { 
   signInWithEmailAndPassword, 
   signInWithPopup,
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import '../index.css';
+import './AuthStyles.css';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -48,7 +48,7 @@ const LoginPage = () => {
       const user = userCredential.user;
       
       if (!user.emailVerified) {
-        setError('Please verify your email before logging in.[Check your inbox/Spam Folder for verification email]');
+        setError('Please verify your email before logging in.');
         setLoading(false);
         return;
       }
@@ -126,19 +126,23 @@ const LoginPage = () => {
         transition={{ duration: 0.5 }}
       >
         {/* Logo Section */}
- <motion.div 
-  className="logo-section"
-  whileHover={{ scale: 1.03 }}
->
-  <img 
-    src="/Vyraa Logo.jpeg"
-    alt="Vyraa Fashions Logo"
-    className="brand-logo"
-  />
-  <h1 className="brand-name">Vyraa Fashions</h1>
-  <p className="brand-tagline">Join Our Community</p>
-</motion.div>
-
+        <motion.div 
+          className="logo-section"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <div className="logo-circle">
+            <motion.div 
+              className="logo-inner"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <span className="logo-text">P</span>
+            </motion.div>
+          </div>
+          <h1 className="brand-name">Plumina</h1>
+          <p className="brand-tagline">Illuminate Your Experience</p>
+        </motion.div>
 
         {/* Form Section */}
         <motion.div 
@@ -154,59 +158,49 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="auth-form">
             {/* Email Field */}
-        <motion.div className="form-group">
-  <label className="input-label" htmlFor="email">Email Address</label>
-
-  <div className="input-group">
-    <FiMail className="input-icon" />
-    <input
-      id="email"
-      type="email"
-      name="email"
-      placeholder="Enter your registered email"
-      value={formData.email}
-      onChange={handleChange}
-      required
-      className="auth-input"
-    />
-  </div>
-
-  <small className="input-helper">
-    Use the email you signed up with
-  </small>
-</motion.div>
-
+            <motion.div 
+              className="form-group"
+              whileFocus={{ scale: 1.02 }}
+            >
+              <div className="input-group">
+                <FiMail className="input-icon" />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="auth-input"
+                />
+              </div>
+            </motion.div>
 
             {/* Password Field */}
-         <motion.div className="form-group">
-  <label className="input-label" htmlFor="password">Password</label>
-
-  <div className="input-group">
-    <FiLock className="input-icon" />
-    <input
-      id="password"
-      type={showPassword ? "text" : "password"}
-      name="password"
-      placeholder="Enter your password"
-      value={formData.password}
-      onChange={handleChange}
-      required
-      className="auth-input"
-    />
-    <button
-      type="button"
-      className="password-toggle"
-      onClick={() => setShowPassword(!showPassword)}
-    >
-      {showPassword ? <FiEyeOff /> : <FiEye />}
-    </button>
-  </div>
-
-  <small className="input-helper">
-    Keep your password private
-  </small>
-</motion.div>
-
+            <motion.div 
+              className="form-group"
+              whileFocus={{ scale: 1.02 }}
+            >
+              <div className="input-group">
+                <FiLock className="input-icon" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="auth-input"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </motion.div>
 
             {/* Options */}
             <div className="form-options">

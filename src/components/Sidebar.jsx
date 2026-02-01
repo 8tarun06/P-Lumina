@@ -48,7 +48,7 @@ function Sidebar() {
 
 
         <div className="footer">
-          <span className="theme">Princyy</span> @All Rights Reserved
+          <span className="theme">Vyraa Fashions</span> @All Rights Reserved
         </div>
       </ul>
     </aside>

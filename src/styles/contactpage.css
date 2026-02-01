@@ -24,7 +24,7 @@
 
 .contact-header h1 {
   font-size: 2.5rem;
-  color: #BA93B1; /* Matching your theme color */
+  color: #BA9c88; /* Matching your theme color */
   margin-bottom: 1rem;
   font-weight: 700;
 }
@@ -74,7 +74,7 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #BA93B1, #d42299); /* Purple gradient */
+  background: linear-gradient(135deg, #BA9c88, #bc762b); /* Purple gradient */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +114,7 @@
 
 .form-group label {
   font-size: 0.95rem;
-  color: #ffffff;
+  color: #000000;
   margin-bottom: 0.5rem;
   font-weight: 500;
 }
@@ -133,7 +133,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #BA93B1;
+  border-color: #BA9c88;
   box-shadow: 0 0 0 3px rgba(186, 147, 177, 0.2);
   background: rgba(255, 255, 255, 0.15);
 }
@@ -150,7 +150,7 @@
 
 /* Submit Button - Matches Save Button in Profile Settings */
 .submit-btn {
-  background: linear-gradient(135deg, #BA93B1, #d42299);
+  background: linear-gradient(135deg, #BA9c88, #bc762b);
   color: white;
   border: none;
   padding: 1rem;
@@ -171,7 +171,7 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #d42299, #BA93B1);
+  background: linear-gradient(135deg, #c68f3b, #BA9c88);
   transform: translateY(-2px);
 }
 
@@ -200,6 +200,7 @@
 .mobile-layout-content .contact-header p {
   font-size: 1rem;
   padding: 0 0.5rem;
+  color: #000000;
 }
 
 /* Mobile Contact Content */
@@ -359,6 +360,8 @@
   .submit-btn,
   .info-card {
     min-height: 44px;
+    color: #000000;
+    text-align: center;
   }
   
   .info-card {
@@ -417,7 +420,7 @@
 /* Ensure proper text contrast */
 .info-card h3,
 .info-card p {
-  color: #ffffff;
+  color: #000000;
 }
 
 /* Form validation styling */

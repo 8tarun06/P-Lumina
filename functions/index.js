@@ -9,11 +9,16 @@ setGlobalOptions({
   maxInstances: 10,
 });
 
-// Razorpay configuration - hardcoded
+// Use environment variables for security
 const razorpayConfig = {
-  key_id: "rzp_test_RY6orIi5COd68k",
-  key_secret: "VQt6VG48g0YIUEALYSQq6C3n"
+  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_RY6orIi5COd68k",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "VQt6VG48g0YIUEALYSQq6C3n"
 };
+
+console.log("🔑 Razorpay Config Loaded:", {
+  key_id: razorpayConfig.key_id ? `${razorpayConfig.key_id.substring(0, 8)}...` : "NOT FOUND",
+  has_secret: !!razorpayConfig.key_secret
+});
 
 // Simple CORS handler
 const corsHandler = (req, res, callback) => {
@@ -29,8 +34,7 @@ const corsHandler = (req, res, callback) => {
   callback(req, res);
 };
 
-// Create order function
-// In createOrder function
+// Create order function - UPDATED WITH BETTER VALIDATION
 exports.createOrder = onRequest(async (req, res) => {
   corsHandler(req, res, async () => {
     try {
@@ -38,9 +42,9 @@ exports.createOrder = onRequest(async (req, res) => {
       console.log("📨 Request body:", req.body);
       console.log("🔢 Amount received:", req.body.amount);
 
-      const { amount } = req.body;
+      const { amount, currency = "INR" } = req.body;
 
-      // Better validation
+      // Better validation with Razorpay limits
       if (!amount || isNaN(amount) || amount <= 0) {
         console.error("❌ Invalid amount:", amount);
         return res.status(400).json({
@@ -49,41 +53,117 @@ exports.createOrder = onRequest(async (req, res) => {
         });
       }
 
+      // Convert to number and validate range
+      const amountNum = Number(amount);
+      
+      // Razorpay limits: min 1 INR (100 paise), max 2000000 INR (200000000 paise)
+      if (amountNum < 100) {
+        console.error("❌ Amount too small:", amountNum);
+        return res.status(400).json({
+          success: false,
+          error: "Minimum amount is 1 INR (100 paise)"
+        });
+      }
+
+      if (amountNum > 200000000) {
+        console.error("❌ Amount exceeds Razorpay limit:", amountNum);
+        return res.status(400).json({
+          success: false,
+          error: "Amount exceeds maximum limit of 2,00,000 INR"
+        });
+      }
+
+      // Log the amount in INR for debugging
+      console.log("💰 Amount in Paise:", amountNum);
+      console.log("💰 Amount in INR:", (amountNum / 100).toFixed(2));
+
+      // Validate Razorpay credentials
+      if (!razorpayConfig.key_id || !razorpayConfig.key_secret) {
+        console.error("❌ Missing Razorpay credentials");
+        return res.status(500).json({
+          success: false,
+          error: "Payment gateway configuration error"
+        });
+      }
+
       const razorpay = new Razorpay({
         key_id: razorpayConfig.key_id,
         key_secret: razorpayConfig.key_secret
       });
 
+      // Test Razorpay connection
+      try {
+        const testPayment = await razorpay.payments.all({
+          count: 1
+        });
+        console.log("✅ Razorpay connection test successful");
+      } catch (testError) {
+        console.error("❌ Razorpay connection failed:", testError.message);
+        return res.status(500).json({
+          success: false,
+          error: "Payment gateway authentication failed. Please check API keys."
+        });
+      }
+
       const order = await razorpay.orders.create({
-        amount: Math.round(amount),
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`,
-        payment_capture: 1
+        amount: Math.round(amountNum), // Already in paise
+        currency: currency.toUpperCase(),
+        receipt: `receipt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        payment_capture: 1,
+        notes: {
+          source: "Vyraa Fashions",
+          timestamp: new Date().toISOString()
+        }
       });
 
-      console.log("✅ Order created:", order.id);
+      console.log("✅ Order created successfully:", {
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        status: order.status
+      });
 
       res.json({
         success: true,
         order: {
           id: order.id,
           amount: order.amount,
-          currency: order.currency
+          currency: order.currency,
+          receipt: order.receipt
         }
       });
 
     } catch (error) {
-      console.error("❌ Order creation error:", error);
-      res.status(500).json({
+      console.error("❌ Order creation error:", {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error.error || error
+      });
+      
+      let errorMessage = "Failed to create payment order";
+      let statusCode = 500;
+      
+      if (error.statusCode === 401) {
+        errorMessage = "Invalid Razorpay API keys";
+        statusCode = 401;
+      } else if (error.statusCode === 400) {
+        errorMessage = error.error?.description || "Invalid request to payment gateway";
+        statusCode = 400;
+      } else if (error.message.includes("amount")) {
+        errorMessage = "Invalid amount specified";
+        statusCode = 400;
+      }
+      
+      res.status(statusCode).json({
         success: false,
-        error: error.message
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? error.message : undefined
       });
     }
   });
 });
 
-// In verifyPayment function
-// In verifyPayment function - ADD THE MISSING VERIFICATION CODE
+// Verify payment function - UPDATED WITH BETTER LOGGING
 exports.verifyPayment = onRequest(async (req, res) => {
   corsHandler(req, res, async () => {
     try {
@@ -115,8 +195,8 @@ exports.verifyPayment = onRequest(async (req, res) => {
 
       console.log("🔐 Payment verification:", isAuthentic ? "SUCCESS" : "FAILED");
       console.log("📊 Signature comparison:", {
-        expected: expectedSignature,
-        received: razorpay_signature,
+        expected: expectedSignature.substring(0, 20) + "...",
+        received: razorpay_signature.substring(0, 20) + "...",
         match: isAuthentic
       });
 
@@ -124,7 +204,8 @@ exports.verifyPayment = onRequest(async (req, res) => {
         success: isAuthentic,
         message: isAuthentic ? "Payment verified successfully" : "Invalid signature",
         order_id: razorpay_order_id,
-        payment_id: razorpay_payment_id
+        payment_id: razorpay_payment_id,
+        verified: isAuthentic
       });
 
     } catch (error) {
@@ -136,4 +217,3 @@ exports.verifyPayment = onRequest(async (req, res) => {
     }
   });
 });
-

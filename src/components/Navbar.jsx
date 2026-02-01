@@ -94,7 +94,7 @@ function Navbar({
       <div className="top-navbar">
         <div className="logo">
           <Link to="/home">
-            <img id="siteLogo" src="/dark mode .png" alt="Logo" />
+            <img id="siteLogo" src="/Vyraa Logo.jpeg" alt="Logo" />
           </Link>
         </div>
 

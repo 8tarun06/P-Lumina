@@ -78,11 +78,11 @@ function Confirm() {
               subject: "🎉 Your Order Has Been Confirmed!",
               html: `
               <div style="font-family: 'Segoe UI', sans-serif; padding: 24px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
-                <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(218, 134, 66, 0.1);">
                   
                   <!-- Header -->
-                  <div style="text-align: center; border-bottom: 2px solid #BA93B1; padding-bottom: 20px; margin-bottom: 30px;">
-                    <h1 style="color: #BA93B1; margin: 0; font-size: 28px;">Order Confirmed! 🎉</h1>
+                  <div style="text-align: center; border-bottom: 2px solid #BA9c88; padding-bottom: 20px; margin-bottom: 30px;">
+                    <h1 style="color: #BA9c88; margin: 0; font-size: 28px;">Order Confirmed! 🎉</h1>
                     <p style="color: #666; font-size: 16px; margin: 10px 0 0 0;">Thank you for your purchase</p>
                   </div>
 
@@ -130,7 +130,7 @@ function Confirm() {
                                 <div style="color: #888; font-size: 14px;">Qty: ${itemQuantity}</div>
                               </div>
                               <div style="text-align: right;">
-                                <div style="font-weight: bold; color: #BA93B1;">₹${itemTotal.toFixed(2)}</div>
+                                <div style="font-weight: bold; color: #BA9c88;">₹${itemTotal.toFixed(2)}</div>
                                 <div style="color: #888; font-size: 12px;">₹${parseFloat(itemPrice).toFixed(2)} each</div>
                               </div>
                             </div>
@@ -192,18 +192,6 @@ function Confirm() {
                     <p><strong>Order Status:</strong> <span style="color: #28a745;">${orderData.status}</span></p>
                   </div>
 
-                  <!-- Personal Message -->
-                  <div style="background: linear-gradient(135deg, #BA93B1 0%, #8a6d8f 100%); color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0 0 10px 0; font-family: 'Brush Script MT', cursive; font-size: 24px;">Princess Khilrani 🤍</h3>
-                    <p style="margin: 0; font-size: 14px; opacity: 0.9;">
-                      This order is another beautiful memory in our story. Thank you for being part of this journey.
-                    </p>
-                    <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.8;">
-                      Forever yours,<br/>
-                      <strong>Babii❤️</strong>
-                    </p>
-                  </div>
-
                 </div>
               </div>`
             }
@@ -211,7 +199,7 @@ function Confirm() {
 
           showModal({
             title: "✅ Order Placed Successfully",
-            message: "Visit Again! Waiting for your next order to serve you better 🤗",
+            message: "Visit Again! Waiting for your next order to serve you better",
             type: "success"
           });
           navigate("/home");
@@ -233,7 +221,7 @@ function Confirm() {
       <div className="top-navbar">
         <div className="logo">
           <a href="/home">
-            <img id="siteLogo" src="dark mode .png" alt="Logo" />
+            <img id="siteLogo" src="Vyraa Logo.jpeg" alt="Logo" />
           </a>
         </div>
       </div>
@@ -261,7 +249,7 @@ function Confirm() {
               </button>
             </li>
             <div className="footer">
-              <span className="theme">Princyy</span> @All Rights Reserved
+              <span className="theme">Vyraa Fashions</span> @All Rights Reserved
             </div>
           </ul>
         </aside>
@@ -285,7 +273,7 @@ function Confirm() {
                 )}
                 
                 {(orderDetails?.appliedCoupons && orderDetails.appliedCoupons.length > 0) && (
-                  <div style={{color: '#28a745', marginTop: '10px', marginLeft: '15rem'}}>
+                  <div style={{color: '#28a745', marginTop: '10px',textAlign: 'left'}}>
                     <strong>Applied Offers:</strong>
                     {orderDetails.appliedCoupons.map(coupon => (
                       <div key={coupon.code} style={{fontSize: '14px'}}>
@@ -304,7 +292,7 @@ function Confirm() {
             <button className="order" onClick={handleCompleteOrderClick}>
               <span className="default">Complete Order</span>
               <span className="success">
-                Visit P_Lumina Again💕
+                Visit Vyraa Fashions Again
                 <svg viewBox="0 4 14 10">
                   <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
                 </svg>

@@ -17,7 +17,7 @@ backdrop-filter: blur(6px);           /* Adjust blur as needed */
 -webkit-backdrop-filter: blur(6px);
   padding: 2rem;
   border-radius: 1rem;
- box-shadow: 0 0 30px 5px #BA93B1;
+ box-shadow: 0 0 30px 5px #BA9c88;
   text-align: center;
   max-width: 90%;
   width: 400px;
@@ -63,7 +63,7 @@ backdrop-filter: blur(6px);           /* Adjust blur as needed */
   padding: 10px 16px;
   border: none;
   border-radius: 6px;
-  background-color: #ba93b1;
+  background-color: #ba9c88;
   color: white;
   cursor: pointer;
   transition: background 0.3s;

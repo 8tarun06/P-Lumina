@@ -8,7 +8,7 @@
 /* Hero Section */
 .about-hero {
   height: 400px;
-  background: linear-gradient(135deg,#BA93B1, #b5529485,#BA93B1);
+  background: linear-gradient(135deg,#BA9c88, #9a743d85,#BA9c88);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,14 +49,14 @@
 
 .mission-content h2 {
   font-size: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 1.5rem;
 }
 
 .mission-content p {
   font-size: 1.1rem;
   line-height: 1.8;
-  color: #ffffff;
+  color: #000000;
 }
 
 .mission-image {
@@ -75,7 +75,7 @@
 
 .stats-section h2 {
   font-size: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 3rem;
 }
 
@@ -104,12 +104,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 .stat-card h3 {
   font-size: 2.5rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 0.5rem;
 }
 
@@ -126,7 +126,7 @@
 
 .team-section h2 {
   font-size: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 3rem;
 }
 
@@ -152,17 +152,17 @@
   border-radius: 50%;
   background-size: cover;
   background-position: center;
-  border: 3px solid rgba(186, 147, 177, 0.3);
+  border: 3px solid rgba(191, 124, 58, 0.3);
 }
 
 .team-card h3 {
   font-size: 1.3rem;
   margin-bottom: 0.5rem;
-  color: #ffffff;
+  color: #ba9c88;
 }
 
 .position {
-  color: #BA93B1;
+  color: #BA9c88;
   font-weight: 1000;
   margin-bottom: 1rem;
 }
@@ -180,7 +180,7 @@
 
 .values-section h2 {
   font-size: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 3rem;
 }
 
@@ -200,7 +200,7 @@
 }
 
 .value-card h3 {
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 1rem;
   font-size: 1.3rem;
 }
@@ -215,7 +215,7 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   font-size: 1.2rem;
 }
 
@@ -531,7 +531,7 @@
   content: '';
   width: 20px;
   height: 20px;
-  border: 2px solid #BA93B1;
+  border: 2px solid #BA9c88;
   border-top: 2px solid transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -547,7 +547,7 @@
 .stat-card p,
 .team-card .bio,
 .value-card p {
-  color: #ffffff;
+  color: #000000;
 }
 
 /* Improved grid layouts for different screen sizes */

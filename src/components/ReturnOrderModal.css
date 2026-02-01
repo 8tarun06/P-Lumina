@@ -14,7 +14,7 @@
 
 .return-order-modal {
   background: #000000;
-  border: 1px solid #BA93B1;
+  border: 1px solid #BA9c88;
   border-radius: 12px;
   width: 90%;
   max-width: 600px;
@@ -41,7 +41,7 @@
 
 .modal-header h2 {
   margin: 0;
-  color: #BA93B1;
+  color: #BA9c88;
   font-size: 1.5rem;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .close-btn:hover {
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 .returnorder-modal-content {
@@ -100,7 +100,7 @@
 }
 
 .item-option:hover, .resolution-option:hover {
-  border-color: #BA93B1;
+  border-color: #BA9c88;
   background: rgba(186, 147, 177, 0.05);
 }
 
@@ -117,7 +117,7 @@
 
 .item-price {
   font-size: 0.9rem;
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 .resolution-option div {
@@ -155,7 +155,7 @@
 
 .pickup-schedule select:focus {
   outline: none;
-  border-color: #BA93B1;
+  border-color: #BA9c88;
 }
 
 .pickup-schedule select option {
@@ -198,7 +198,7 @@
 
 .bank-info-note {
   font-size: 0.9rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 1rem;
 }
 
@@ -216,7 +216,7 @@
 
 .form-group label {
   font-size: 0.9rem;
-  color: #ffffff;
+  color: #000000;
   font-weight: 500;
 }
 
@@ -231,7 +231,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #BA93B1;
+  border-color: #BA9c88;
 }
 
 .form-group input::placeholder {
@@ -247,7 +247,7 @@
 
 .return-summary h4 {
   margin-bottom: 1rem;
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 .summary-details p {
@@ -286,7 +286,7 @@
 }
 
 .btn-primary {
-  background: #BA93B1;
+  background: #BA9c88;
   color: white;
 }
 
@@ -329,8 +329,8 @@
 
 .reason-option input[type="radio"]:checked + .checkmark,
 .resolution-option input[type="radio"]:checked + .checkmark {
-  border-color: #BA93B1;
-  background: #BA93B1;
+  border-color: #BA9c88;
+  background: #BA9c88;
 }
 
 .reason-option input[type="radio"]:checked + .checkmark::after,
@@ -358,8 +358,8 @@
 }
 
 .item-option input[type="checkbox"]:checked + .checkmark {
-  border-color: #BA93B1;
-  background: #BA93B1;
+  border-color: #BA9c88;
+  background: #BA9c88;
 }
 
 .item-option input[type="checkbox"]:checked + .checkmark::after {

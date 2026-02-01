@@ -30,7 +30,13 @@ export default function ProductCard({ product, onCartUpdate,wishlistIds, toggleW
   const [addingToCart, setAddingToCart] = useState(false);
 
   // Your real product fields
-  const images = product.images || [];
+const images = Array.isArray(product.images) && product.images.length > 0
+  ? product.images
+  : product.image
+  ? [product.image]
+  : product.displayImage
+  ? [product.displayImage]
+  : ["https://via.placeholder.com/300x300?text=No+Image"];
   const title = product.name || product.title || "Product";
   const rating = product.rating || 0;
   const reviewsCount = product.reviewsCount ||
@@ -574,14 +580,19 @@ export default function ProductCard({ product, onCartUpdate,wishlistIds, toggleW
           {images.length > 0 ? (
             images.map((src, i) => (
               src ? (
-                <img
-                  key={i}
-                  src={src}
-                  className={`slide ${i === 0 ? "active" : ""}`}
-                  alt={`product view ${i + 1}`}
-                />
+        <img
+  key={i}
+  src={src}
+  className={`slide ${i === 0 ? "active" : ""}`}
+  alt={`product view ${i + 1}`}
+  loading="lazy"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://via.placeholder.com/300x300?text=No+Image";
+  }}
+/>
               ) : null
-            )).filter(Boolean)
+            ))
           ) : (
             <img 
               src="https://via.placeholder.com/300x300?text=No+Image" 
@@ -654,17 +665,6 @@ export default function ProductCard({ product, onCartUpdate,wishlistIds, toggleW
 
         {/* TITLE */}
         <div className="title">{title}</div>
-
-        {/* RATING */}
-        <div className="rating-box">
-          <span className="stars">
-            {Array.from({ length: 5 }, (_, i) =>
-              i + 1 <= Math.round(rating) ? "★" : "☆"
-            ).join("")}
-          </span>
-          <span className="rating-value">{rating.toFixed(1)}</span>
-          <span className="review-count">({reviewsCount} reviews)</span>
-        </div>
 
         {/* PRICE */}
         <div className="price-box">

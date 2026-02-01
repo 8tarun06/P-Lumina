@@ -7,20 +7,20 @@ body {
 .product-card {
     width: 100%;
     max-width: 320px;
-    background: #000;
+    background:  rgba(186, 156, 136, 0.2);
     border-radius: 16px;
     padding: 16px;
-    color: white;
+    color: #000000;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 8px 22px rgba(186,147,177,0.25);
+    box-shadow: #ba9c88 0 8px 22px;
     transition: transform 0.25s ease;
     margin: 0 auto;
 }
 
 .product-card:hover {
     transform: scale(1.02);   /* smooth premium hover instead of translate */
-    box-shadow: 0 14px 28px rgba(186,147,177,0.45);
+    box-shadow: 0 14px 28px rgba(186, 156, 136, 0.2);
 }
 
 
@@ -30,7 +30,7 @@ body {
     aspect-ratio: 1/1;
     border-radius: 14px;
     overflow: hidden;
-    background: #181818;
+    background: rgba(186, 156, 136, 0.2);
     position: relative;
 }
 
@@ -45,7 +45,7 @@ body {
     opacity: 0;
     transition: opacity 0.35s ease;
     padding: 10px;
-    background: #000;
+    background: rgba(186, 156, 136, 0.2);
 }
 .slide.active {
     opacity: 1;
@@ -68,7 +68,7 @@ body {
     cursor: pointer;
 }
 .dot.active {
-    background: #BA93B1;
+    background: #BA9c88;
 }
 
 /* ARROWS */
@@ -89,7 +89,7 @@ body {
     transition: 0.2s;
 }
 .arrow:hover {
-    background: #BA93B1;
+    background: #BA9c88;
     color: #fff;
 }
 .arrow.prev { left: 8px; }
@@ -100,7 +100,7 @@ body {
     margin-top: 14px;
     font-size: 18px;
     font-weight: 600;
-    color: #fff;
+    color: #000000;
     line-height: 1.3;
 }
 
@@ -114,7 +114,7 @@ body {
 .price-now {
     font-size: 22px;
     font-weight: 700;
-    color: #ffffff;
+    color: #000000;
 }
 .price-old {
     text-decoration: line-through;
@@ -138,7 +138,7 @@ body {
 .btn-wish {
     width: 48%;
     padding: 12px;
-    background: #BA93B1;
+    background: #ba9c88;
     color: #000;
     border-radius: 8px;
     text-align: center;
@@ -175,7 +175,7 @@ body {
    width: 48px;
    height: 48px;
    border-radius: 50%;
-   background: linear-gradient(145deg, #BA93B1, #d7b4d6);
+   background: linear-gradient(145deg, #ba9c88, #ba9c88);
    display: flex;
    align-items: center;
    justify-content: center;
@@ -195,9 +195,10 @@ body {
 /* quantity pill that expands from the same position as the plus icon */
 .qty-box {
    display: none;
-   background: linear-gradient(90deg, rgba(34,34,34,0.95), rgba(24,24,24,0.95));
+   background: linear-gradient(90deg, rgba(255, 255, 255, 0.516), rgba(255, 255, 255, 0.804));
    border: 1px solid rgba(255,255,255,0.06);
    padding: 6px 10px;
+   color : #000000;
    border-radius: 28px;
    display: none;
    align-items: center;
@@ -215,7 +216,7 @@ body {
    height: 34px;
    border-radius: 50%;
    border: none;
-   background: #BA93B1;
+   background: #BA9c88;
    color: #000;
    font-weight: bold;
    cursor: pointer;
@@ -230,7 +231,7 @@ body {
    min-width: 24px;
    text-align: center;
    font-weight: 700;
-   color: #fff;
+   color: #000000;
    font-size: 15px;
 }
 
@@ -258,8 +259,8 @@ body {
    height: 45px;
    background: rgba(255,255,255,0.07);
    border-radius: 50%;
-   border: 1px solid #BA93B1;
-   color: #BA93B1;
+   border: 1px solid #ba9c88;
+   color: #ba9c88;
    font-size: 22px;
    backdrop-filter: blur(4px);
    cursor: pointer;
@@ -271,12 +272,12 @@ body {
 }
 .wish-heart:hover {
    transform: scale(1.12);
-   background: #BA93B1;
+   background: #ba9c88;
    color: black;
    box-shadow: 0 0 20px rgba(186,147,177,0.6);
 }
 .wish-heart.active {
-   background: #BA93B1;
+   background: #BA9c88;
    color: black;
    transform: scale(1.06);
 }
@@ -290,7 +291,7 @@ body {
 }
 
 .stars {
-   color: #BA93B1;
+   color: #BA9c88;
    font-size: 16px;
    letter-spacing: 1px;
 }
@@ -298,7 +299,7 @@ body {
 .rating-value {
    font-weight: 600;
    font-size: 14px;
-   color: #ffffff;
+   color: #000000;
 }
 
 .review-count {
@@ -368,11 +369,11 @@ body {
    background: none;
    font-size: 28px;
    cursor: pointer;
-   color: #BA93B1;
+   color: #BA9c88;
 }
 
 .variant-close-btn:hover {
-   color: #BA93B1;
+   color: #Ba9c88;
    background: #000000;
    border-radius: 80%;
 }

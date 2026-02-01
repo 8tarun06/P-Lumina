@@ -6,7 +6,7 @@
 .layout {
   display: flex;
   min-height: calc(100vh - 80px);
-  background-color: black;
+  background-color: #ffffff;
   color: #e0e0e0;
 }
 
@@ -23,7 +23,7 @@
 .orders-title {
   font-size: 28px;
   margin-bottom: 2rem;
-  color: #BA93B1;
+  color: #BA9c88;
   font-weight: 500;
 }
 
@@ -32,7 +32,7 @@
   justify-content: center;
   align-items: center;
   height: 200px;
-  color: #BA93B1;
+  color: #BA9c88;
   font-size: 2rem;
 }
 
@@ -46,7 +46,7 @@
 .empty-orders i {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 .empty-orders p {
@@ -57,7 +57,7 @@
 .shop-btn {
   display: inline-block;
   padding: 0.8rem 1.5rem;
-  background-color: #BA93B1;
+  background-color: #BA9c88;
   color: white;
   text-decoration: none;
   border-radius: 4px;
@@ -66,7 +66,7 @@
 }
 
 .shop-btn:hover {
-  background-color: #a87b9d;
+  background-color: #ba9c88;
   transform: translateY(-2px);
 }
 
@@ -95,7 +95,7 @@
 }
 
 p.meta-label {
-  color: #ffffff;
+  color: #000000;
 }
 
 .order-meta {
@@ -108,7 +108,7 @@ p.meta-label {
 
 .meta-label {
   font-size: 0.8rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 0.2rem;
   font-weight: 600;
 }
@@ -116,7 +116,7 @@ p.meta-label {
 .meta-value {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #ffffff;
+  color: #000000;
 }
 
 .order-header {
@@ -162,7 +162,7 @@ h3.order-id {
 ================================= */
 .order-items-container {
   padding: 1rem 1.5rem;
-  background-color: #000000;
+  background-color: #ffffff;
 }
 
 .order-item {
@@ -197,18 +197,18 @@ h3.order-id {
 .item-name {
   font-size: 1rem;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
+  color: #000000;
 }
 
 .item-price {
   font-size: 0.9rem;
-  color: #BA93B1;
+  color: #BA9c88;
   margin-bottom: 0.5rem;
 }
 
 .item-qty {
   font-size: 0.9rem;
-  color: #aaaaaa;
+  color: #000000;
   margin-bottom: 1rem;
 }
 
@@ -234,7 +234,7 @@ h3.order-id {
 
 .action-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
-  color: #BA93B1;
+  color: #BA9c88;
 }
 
 .action-btn i {
@@ -252,7 +252,7 @@ h3.order-id {
 .expand-btn {
   background: none;
   border: none;
-  color: #BA93B1;
+  color: #BA9c88;
   cursor: pointer;
   font-weight: 500;
   display: inline-flex;
@@ -281,12 +281,12 @@ h3.order-id {
 }
 
 .tracking-modal {
-  background: black;
+  background: rgb(255, 255, 255);
   padding: 2rem;
   border-radius: 10px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 10px 30px #ba93b1;
+  box-shadow: 0 10px 30px #ba9c88;
   position: relative;
 }
 
@@ -309,13 +309,14 @@ h3.order-id {
   border-radius: 50%;
   background: #ccc;
   line-height: 30px;
-  color: white;
+  color: rgb(0, 0, 0);
   font-weight: bold;
+  text-align: center;
 }
 
 .step-label {
   font-size: 12px;
-  color: #ffffff;
+  color: #000000;
 }
 
 .step.active .step-circle {
@@ -338,18 +339,18 @@ h3.order-id {
 }
 
 .close-btn:hover {
-  background: #ba93b1;
+  background: #ba9c88;
   color: white;
 }
 
 .action-btn.invoice-btn {
-  background-color: #4CAF50;
-  border-color: #4CAF50;
+  background-color: #ffffff;
+  border-color: #ffffff;
 }
 
 .action-btn.invoice-btn:hover {
-  background-color: #45a049;
-  border-color: #45a049;
+  background-color: #ffffff;
+  border-color: #ffffff;
 }
 
 /* ===============================
@@ -529,7 +530,7 @@ h3.order-id {
   padding: 8px 12px;
   background: transparent;
   border-radius: 6px;
-  border: 1px solid #BA93B1;
+  border: 1px solid #BA9c88;
 }
 
 .savings-badge {
@@ -618,14 +619,14 @@ h3.order-id {
 
 .meta-label {
   font-size: 12px;
-  color: #BA93B1;
+  color: #BA9c88;
   margin: 0;
   font-weight: 600;
 }
 
 .meta-value {
   font-size: 14px;
-  color: #ffffff;
+  color: #000000;
   margin: 4px 0 0 0;
   font-weight: 500;
 }
@@ -682,7 +683,7 @@ h3.order-id {
 }
 
 .action-btn.invoice-btn {
-  background: rgba(76, 175, 80, 0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-color: #4CAF50;
   color: #4CAF50;
 }
@@ -741,6 +742,7 @@ h3.order-id {
   .mobile-layout-content .item-actions .action-btn {
     font-size: 0.8rem;
     padding: 0.7rem 0.8rem;
+    color: #000000;
   }
 
   .mobile-layout-content .orders-title {
